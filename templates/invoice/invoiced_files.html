@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+
+{% block title %}Dossiers Facturés{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <a href="{{ url_for('invoice.dashboard') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Retour au tableau de bord
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header bg-success text-white">
+        <h4 class="mb-0">
+            <i class="bi bi-check-circle"></i> Tous les Dossiers Facturés ({{ files|length }})
+        </h4>
+    </div>
+    <div class="card-body">
+        {% if files %}
+        <!-- Filters -->
+        <div class="row mb-3">
+            <div class="col-md-12">
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input type="text" class="form-control" id="searchInput" placeholder="Rechercher par numéro de dossier, MAR, ProForma...">
+                </div>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover" id="invoicedTable">
+                <thead>
+                    <tr>
+                        <th>Numéro Dossier</th>
+                        <th>Propriétaire</th>
+                        <th>Importateur</th>
+                        <th>Numéro MAR</th>
+                        <th>ProForma</th>
+                        <th>Facturé Par</th>
+                        <th>Date Facturation</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for file in files %}
+                    <tr>
+                        <td><strong>{{ file.file_number }}</strong></td>
+                        <td>
+                            <i class="bi bi-person"></i> {{ file.owner.username }}
+                        </td>
+                        <td>{{ file.importer }}</td>
+                        <td>
+                            {% if file.mar_number %}
+                            <span class="badge bg-info">{{ file.mar_number }}</span>
+                            {% else %}
+                            <span class="text-muted">N/A</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if file.proforma_number %}
+                            <span class="badge bg-info">{{ file.proforma_number }}</span>
+                            {% else %}
+                            <span class="text-muted">N/A</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if file.invoicer %}
+                            <i class="bi bi-person-badge"></i> {{ file.invoicer.username }}
+                            {% else %}
+                            <span class="text-muted">N/A</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if file.invoiced_at %}
+                            {{ file.invoiced_at.strftime('%d/%m/%Y %H:%M') }}
+                            {% else %}
+                            <span class="text-muted">N/A</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{{ url_for('invoice.view_file', file_id=file.id) }}" 
+                               class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-eye"></i> Voir
+                            </a>
+                            {% if file.payment_justification_path %}
+                            <a href="{{ url_for('invoice.download_payment_justification', file_id=file.id) }}" 
+                               class="btn btn-sm btn-outline-success">
+                                <i class="bi bi-download"></i>
+                            </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-inbox display-1 text-muted"></i>
+            <p class="text-muted mt-3">Aucun dossier facturé.</p>
+            <a href="{{ url_for('invoice.dashboard') }}" class="btn btn-primary">
+                <i class="bi bi-arrow-left"></i> Retour au tableau de bord
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Statistics -->
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="bi bi-check-circle display-4 text-success"></i>
+                <h3 class="mt-2">{{ files|length }}</h3>
+                <p class="text-muted mb-0">Total Facturés</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="bi bi-calendar-check display-4 text-info"></i>
+                <h3 class="mt-2">{{ files|selectattr('invoiced_at')|list|length }}</h3>
+                <p class="text-muted mb-0">Avec Date</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="bi bi-paperclip display-4 text-warning"></i>
+                <h3 class="mt-2">{{ files|selectattr('payment_justification_path')|list|length }}</h3>
+                <p class="text-muted mb-0">Avec Justificatif</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Search functionality
+document.getElementById('searchInput').addEventListener('keyup', function() {
+    const searchValue = this.value.toLowerCase();
+    const table = document.getElementById('invoicedTable');
+    const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+    
+    for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        const text = row.textContent.toLowerCase();
+        
+        if (text.includes(searchValue)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    }
+});
+</script>
+{% endblock %}

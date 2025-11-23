@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+
+{% block title %}Tableau de Bord Évaluateur{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="display-6">
+            <i class="bi bi-clipboard-check"></i> Tableau de Bord Évaluateur
+        </h1>
+        <p class="text-muted">Évaluez les dossiers affectés par l'équipe d'affectation</p>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card text-center border-warning">
+            <div class="card-body">
+                <h3 class="display-4 text-warning">{{ stats.pending }}</h3>
+                <p class="text-muted mb-0">En attente d'évaluation (Non assignés)</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card text-center border-info">
+            <div class="card-body">
+                <h3 class="display-4 text-info">{{ stats.in_progress }}</h3>
+                <p class="text-muted mb-0">En cours d'évaluation (Assignés à moi)</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Auto-Assignment Section -->
+{% if pending_files %}
+<div class="card border-success mb-4">
+    <div class="card-header bg-success text-white">
+        <h5 class="mb-0">
+            <i class="bi bi-hand-index"></i> Auto-Affectation - S'affecter des Dossiers
+        </h5>
+    </div>
+    <div class="card-body">
+        <p class="text-muted mb-4">
+            Sélectionnez combien de dossiers "en attente d'évaluation" vous souhaitez évaluer (1 à 10):
+        </p>
+        <div class="row align-items-end">
+            <div class="col-md-10">
+                <label for="fileCount" class="form-label">Nombre de dossiers à s'affecter:</label>
+                <select class="form-select" id="fileCount">
+                    <option value="">-- Choisir un nombre --</option>
+                    {% for i in range(1, 11) %}
+                    {% if i <= stats.pending %}
+                    <option value="{{ i }}">{{ i }} dossier{{ 's' if i > 1 else '' }}</option>
+                    {% endif %}
+                    {% endfor %}
+                </select>
+                <small class="text-muted">{{ stats.pending }} dossier(s) disponible(s)</small>
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-success w-100" id="assignBtn" onclick="assignFiles()" disabled>
+                    <i class="bi bi-check-circle"></i> S'Affecter
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="alert alert-info">
+    <i class="bi bi-info-circle"></i> Aucun dossier en attente d'évaluation pour le moment.
+</div>
+{% endif %}
+
+<!-- En Attente d'Évaluation Section (Non assignés) -->
+{% if pending_files %}
+<div class="card border-warning mb-4">
+    <div class="card-header bg-warning text-dark">
+        <h5 class="mb-0">
+            <i class="bi bi-hourglass-split"></i> En Attente d'Évaluation - Non Assignés ({{ pending_files|length }})
+        </h5>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Numéro</th>
+                    <th>Importateur</th>
+                    <th>Exportateur</th>
+                    <th>Pays</th>
+                    <th>Route</th>
+                    <th>Date Réception</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for file in pending_files %}
+                <tr>
+                    <td>
+                        <strong>{{ file.file_number }}</strong>
+                    </td>
+                    <td>{{ file.importer }}</td>
+                    <td>{{ file.exporter }}</td>
+                    <td>{{ file.country }}</td>
+                    <td>
+                        <span class="badge bg-secondary">Route {{ file.route }}</span>
+                    </td>
+                    <td>{{ file.receipt_date.strftime('%d/%m/%Y') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- En Attente d'Évaluation Section (Assignés à moi) -->
+{% if in_progress_files %}
+<div class="card border-info mb-4">
+    <div class="card-header bg-info text-white">
+        <h5 class="mb-0">
+            <i class="bi bi-pencil-square"></i> Mes Dossiers - En Cours d'Évaluation ({{ in_progress_files|length }})
+        </h5>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Numéro</th>
+                    <th>Importateur</th>
+                    <th>Exportateur</th>
+                    <th>Pays</th>
+                    <th>Route</th>
+                    <th>Date Réception</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for file in in_progress_files %}
+                <tr>
+                    <td>
+                        <strong>{{ file.file_number }}</strong>
+                    </td>
+                    <td>{{ file.importer }}</td>
+                    <td>{{ file.exporter }}</td>
+                    <td>{{ file.country }}</td>
+                    <td>
+                        <span class="badge bg-secondary">Route {{ file.route }}</span>
+                    </td>
+                    <td>{{ file.receipt_date.strftime('%d/%m/%Y') }}</td>
+                    <td>
+                        <a href="{{ url_for('evaluator.evaluate_file', file_id=file.id) }}" class="btn btn-sm btn-info">
+                            <i class="bi bi-clipboard-check"></i> Évaluer
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<script>
+function assignFiles() {
+    const select = document.getElementById('fileCount');
+    const count = select.value;
+    
+    if (!count) {
+        alert('Veuillez sélectionner un nombre de dossiers');
+        return;
+    }
+    
+    if (confirm(`Vous êtes sûr de vouloir vous affecter ${count} dossier(s) à évaluer ?`)) {
+        // Create and submit form
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/evaluator/files/batch-assign/${count}`;
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+// Enable/disable button based on selection
+document.getElementById('fileCount').addEventListener('change', function() {
+    document.getElementById('assignBtn').disabled = !this.value;
+});
+</script>
+{% endblock %}

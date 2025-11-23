@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}Trop de Requêtes - 429{% endblock %}
+
+{% block content %}
+<div class="container text-center" style="padding: 100px 0;">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <i class="bi bi-hourglass-split display-1 text-warning"></i>
+            <h1 class="display-4 mt-4">429</h1>
+            <h2>Trop de Requêtes</h2>
+            <p class="lead text-muted mt-3">
+                Vous avez effectué trop de tentatives. Veuillez patienter quelques minutes.
+            </p>
+            
+            <div class="alert alert-warning mt-4">
+                <i class="bi bi-shield-lock"></i>
+                <strong>Protection contre les abus:</strong> Cette limitation protège le système.
+            </div>
+            
+            <div class="mt-5">
+                <p class="text-muted">
+                    Veuillez attendre <strong>15 minutes</strong> avant de réessayer.
+                </p>
+            </div>
+            
+            <div class="mt-4">
+                <a href="{{ url_for('auth.index') }}" class="btn btn-outline-secondary btn-lg">
+                    <i class="bi bi-house"></i> Retour à l'accueil
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+
+{% block title %}Accueil - VOC Platform{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="row align-items-center py-5">
+    <div class="col-md-6">
+        <h1 class="display-4 fw-bold mb-4">
+            <span style="color: #FFB81C;">Intertek</span> VOC Platform
+        </h1>
+        <p class="lead mb-4">
+            Plateforme de gestion et de suivi des dossiers VOC (Verification of Conformity) pour simplifier vos processus d'importation et d'inspection.
+        </p>
+        <div class="d-grid gap-2 d-md-flex">
+            <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-lg px-4">
+                <i class="bi bi-box-arrow-in-right"></i> Se Connecter
+            </a>
+            <a href="{{ url_for('auth.register') }}" class="btn btn-outline-secondary btn-lg px-4">
+                <i class="bi bi-person-plus"></i> S'inscrire
+            </a>
+        </div>
+    </div>
+    <div class="col-md-6 text-center">
+        <div class="p-5" style="background: linear-gradient(135deg, #003DA5 0%, #FFB81C 100%); border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+            <i class="bi bi-file-earmark-check" style="font-size: 150px; color: white;"></i>
+        </div>
+    </div>
+</div>
+
+<!-- Features Section -->
+<div class="row mt-5 pt-5">
+    <div class="col-12 text-center mb-5">
+        <h2 class="display-6 fw-bold">Fonctionnalités Principales</h2>
+        <p class="text-muted">Une solution complète pour gérer vos dossiers VOC</p>
+    </div>
+</div>
+
+<div class="row g-4 mb-5">
+    <!-- Feature 1 -->
+    <div class="col-md-4">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center p-4">
+                <div class="mb-3">
+                    <i class="bi bi-folder-plus" style="font-size: 50px; color: #003DA5;"></i>
+                </div>
+                <h5 class="card-title fw-bold">Gestion des Dossiers</h5>
+                <p class="card-text text-muted">
+                    Créez et gérez vos dossiers VOC avec facilité. Suivi en temps réel du statut de chaque dossier.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Feature 2 -->
+    <div class="col-md-4">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center p-4">
+                <div class="mb-3">
+                    <i class="bi bi-receipt" style="font-size: 50px; color: #FFB81C;"></i>
+                </div>
+                <h5 class="card-title fw-bold">Facturation Intégrée</h5>
+                <p class="card-text text-muted">
+                    Système de facturation complet avec gestion des numéros MAR, ProForma et justificatifs de paiement.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Feature 3 -->
+    <div class="col-md-4">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center p-4">
+                <div class="mb-3">
+                    <i class="bi bi-bell" style="font-size: 50px; color: #003DA5;"></i>
+                </div>
+                <h5 class="card-title fw-bold">Rappels Automatiques</h5>
+                <p class="card-text text-muted">
+                    Notifications automatiques par email et in-app pour ne jamais manquer une échéance importante.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Feature 4 -->
+    <div class="col-md-4">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center p-4">
+                <div class="mb-3">
+                    <i class="bi bi-shield-check" style="font-size: 50px; color: #FFB81C;"></i>
+                </div>
+                <h5 class="card-title fw-bold">Sécurité Avancée</h5>
+                <p class="card-text text-muted">
+                    Système de rôles et permissions pour contrôler l'accès aux données sensibles.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Feature 5 -->
+    <div class="col-md-4">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center p-4">
+                <div class="mb-3">
+                    <i class="bi bi-graph-up" style="font-size: 50px; color: #003DA5;"></i>
+                </div>
+                <h5 class="card-title fw-bold">Statistiques Détaillées</h5>
+                <p class="card-text text-muted">
+                    Tableaux de bord complets avec métriques et analyses pour suivre vos performances.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Feature 6 -->
+    <div class="col-md-4">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center p-4">
+                <div class="mb-3">
+                    <i class="bi bi-people" style="font-size: 50px; color: #FFB81C;"></i>
+                </div>
+                <h5 class="card-title fw-bold">Collaboration d'Équipe</h5>
+                <p class="card-text text-muted">
+                    Travaillez en équipe avec des rôles distincts: utilisateurs, facturation, administrateurs.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Routes Info Section -->
+<div class="row mt-5 pt-5 mb-5">
+    <div class="col-12 text-center mb-4">
+        <h2 class="display-6 fw-bold">Routes Supportées</h2>
+        <p class="text-muted">Support complet pour toutes les routes d'importation</p>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card text-center border-primary">
+            <div class="card-body">
+                <h3 class="text-primary">Route A</h3>
+                <p class="text-muted">Processus d'importation standard</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card text-center border-warning">
+            <div class="card-body">
+                <h3 class="text-warning">Route B</h3>
+                <p class="text-muted">Avec numéro SOR requis</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card text-center border-success">
+            <div class="card-body">
+                <h3 class="text-success">Route C</h3>
+                <p class="text-muted">Avec numéro SOL requis</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CTA Section -->
+<div class="row mt-5 py-5 bg-light rounded">
+    <div class="col-12 text-center">
+        <h2 class="display-6 fw-bold mb-4">Prêt à Commencer?</h2>
+        <p class="lead mb-4">Rejoignez la plateforme VOC d'Intertek dès aujourd'hui</p>
+        <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg px-5">
+            <i class="bi bi-rocket-takeoff"></i> Créer un Compte Gratuitement
+        </a>
+    </div>
+</div>
+
+<!-- Info Section -->
+<div class="row mt-5 pt-5">
+    <div class="col-md-6">
+        <h3 class="fw-bold mb-3">Qu'est-ce que le VOC?</h3>
+        <p class="text-muted">
+            Le VOC (Verification of Conformity) est un programme de vérification de la conformité qui garantit que les produits importés respectent les normes et réglementations applicables dans le pays de destination.
+        </p>
+        <ul class="text-muted">
+            <li>Inspection avant expédition</li>
+            <li>Vérification de la conformité</li>
+            <li>Certificat de conformité (CoC)</li>
+            <li>Suivi et traçabilité</li>
+        </ul>
+    </div>
+    <div class="col-md-6">
+        <h3 class="fw-bold mb-3">Pourquoi Intertek?</h3>
+        <p class="text-muted">
+            Intertek est un leader mondial dans les services d'assurance qualité, offrant des solutions innovantes pour garantir la qualité, la sécurité et la conformité de vos produits.
+        </p>
+        <ul class="text-muted">
+            <li>Expertise mondiale reconnue</li>
+            <li>Réseau international</li>
+            <li>Technologies de pointe</li>
+            <li>Service client dédié</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}

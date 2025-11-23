@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}Page Non Trouvée - 404{% endblock %}
+
+{% block content %}
+<div class="container text-center" style="padding: 100px 0;">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <i class="bi bi-exclamation-triangle display-1 text-warning"></i>
+            <h1 class="display-4 mt-4">404</h1>
+            <h2>Page Non Trouvée</h2>
+            <p class="lead text-muted mt-3">
+                Désolé, la page que vous recherchez n'existe pas ou a été déplacée.
+            </p>
+            
+            <div class="mt-5">
+                <a href="{{ url_for('auth.index') }}" class="btn btn-primary btn-lg me-2">
+                    <i class="bi bi-house"></i> Retour à l'accueil
+                </a>
+                <a href="javascript:history.back()" class="btn btn-outline-secondary btn-lg">
+                    <i class="bi bi-arrow-left"></i> Page précédente
+                </a>
+            </div>
+            
+            <div class="mt-5">
+                <p class="text-muted">
+                    <small>Si vous pensez qu'il s'agit d'une erreur, contactez l'administrateur.</small>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

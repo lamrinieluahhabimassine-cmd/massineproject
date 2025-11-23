@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}Tous les Dossiers - Admin{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="display-6">
+            <i class="bi bi-folder-fill"></i> Tous les Dossiers
+        </h1>
+        <p class="text-muted">Vue complète de tous les dossiers de la plateforme</p>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-funnel"></i> Filtres</h5>
+    </div>
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('admin.files') }}">
+            <div class="row">
+                <div class="col-md-3">
+                    <label class="form-label">Statut</label>
+                    <select name="status" class="form-select">
+                        <option value="">Tous les statuts</option>
+                        <option value="en attente d'évaluation" {% if status_filter == "en attente d'évaluation" %}selected{% endif %}>En attente d'évaluation</option>
+                        <option value="en cours d'évaluation" {% if status_filter == "en cours d'évaluation" %}selected{% endif %}>En cours d'évaluation</option>
+                        <option value="ready to invoice" {% if status_filter == "ready to invoice" %}selected{% endif %}>Prêt à Facturer</option>
+                        <option value="payed" {% if status_filter == "payed" %}selected{% endif %}>Payé</option>
+                        <option value="en cours de traitement" {% if status_filter == "en cours de traitement" %}selected{% endif %}>En cours de traitement</option>
+                        <option value="à compléter" {% if status_filter == "à compléter" %}selected{% endif %}>À Compléter</option>
+                        <option value="transfert à l'inspection" {% if status_filter == "transfert à l'inspection" %}selected{% endif %}>Transfert à l'inspection</option>
+                        <option value="Finalized" {% if status_filter == "Finalized" %}selected{% endif %}>Finalized</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Route</label>
+                    <select name="route" class="form-select">
+                        <option value="">Toutes les routes</option>
+                        <option value="A" {% if route_filter == "A" %}selected{% endif %}>Route A</option>
+                        <option value="B" {% if route_filter == "B" %}selected{% endif %}>Route B</option>
+                        <option value="C" {% if route_filter == "C" %}selected{% endif %}>Route C</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Utilisateur</label>
+                    <select name="user" class="form-select">
+                        <option value="">Tous les utilisateurs</option>
+                        {% for user in users %}
+                        <option value="{{ user.id }}" {% if user_filter == user.id|string %}selected{% endif %}>
+                            {{ user.username }} ({{ user.email }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">&nbsp;</label>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-search"></i> Filtrer
+                    </button>
+                </div>
+            </div>
+        </form>
+        {% if status_filter or route_filter or user_filter %}
+        <div class="mt-2">
+            <a href="{{ url_for('admin.files') }}" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-x-circle"></i> Réinitialiser les filtres
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Files Table -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="bi bi-list"></i> Liste des Dossiers ({{ files|length }})
+        </h5>
+    </div>
+    <div class="card-body">
+        {% if files %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Numéro</th>
+                        <th>Utilisateur</th>
+                        <th>Importateur</th>
+                        <th>Exportateur</th>
+                        <th>Pays</th>
+                        <th>Route</th>
+                        <th>Statut</th>
+                        <th>Date Réception</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for file in files %}
+                    <tr class="{% if file.is_overdue() %}table-warning{% endif %}">
+                        <td>
+                            <strong>{{ file.file_number }}</strong>
+                            {% if file.is_overdue() %}
+                            <i class="bi bi-exclamation-triangle text-warning" title="Rappel dépassé!"></i>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <i class="bi bi-person"></i> {{ file.owner.username }}
+                        </td>
+                        <td>{{ file.importer }}</td>
+                        <td>{{ file.exporter }}</td>
+                        <td>{{ file.country }}</td>
+                        <td>
+                            <span class="badge bg-secondary">{{ file.route }}</span>
+                            {% if file.route == 'B' and file.sor_number %}
+                            <br><small class="text-muted">SOR: {{ file.sor_number }}</small>
+                            {% elif file.route == 'C' and file.sol_number %}
+                            <br><small class="text-muted">SOL: {{ file.sol_number }}</small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if file.status == 'Finalized' %}
+                            <span class="badge bg-success">{{ file.status }}</span>
+                            {% elif file.status == 'en attente d\'évaluation' %}
+                            <span class="badge bg-warning text-dark">{{ file.status }}</span>
+                            {% else %}
+                            <span class="badge bg-info">{{ file.status }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ file.receipt_date.strftime('%d/%m/%Y') }}</td>
+                        <td>
+                            <a href="{{ url_for('user.view_file', file_id=file.id) }}" 
+                               class="btn btn-sm btn-outline-primary" title="Voir détails">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            <form method="POST" 
+                                  action="{{ url_for('admin.delete_file', file_id=file.id) }}" 
+                                  style="display: inline;"
+                                  onsubmit="return confirm('Supprimer le dossier {{ file.file_number }} ?');">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Supprimer">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-inbox display-1 text-muted"></i>
+            <p class="text-muted mt-3">Aucun dossier trouvé avec ces filtres.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block title %}Inscription{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    <i class="bi bi-person-plus"></i> Créer un Compte
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="registerForm">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">
+                            <i class="bi bi-person"></i> Nom d'utilisateur *
+                        </label>
+                        <input 
+                            type="text" 
+                            class="form-control" 
+                            id="username" 
+                            name="username" 
+                            required
+                            minlength="3"
+                            maxlength="80"
+                            placeholder="Choisissez un nom d'utilisateur">
+                        <small class="text-muted">3-80 caractères, lettres, chiffres, _ et - uniquement</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="email" class="form-label">
+                            <i class="bi bi-envelope"></i> Email *
+                        </label>
+                        <input 
+                            type="email" 
+                            class="form-control" 
+                            id="email" 
+                            name="email" 
+                            required
+                            placeholder="votre.email@example.com">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="password" class="form-label">
+                            <i class="bi bi-lock"></i> Mot de passe *
+                        </label>
+                        <input 
+                            type="password" 
+                            class="form-control" 
+                            id="password" 
+                            name="password" 
+                            required
+                            minlength="6"
+                            placeholder="Minimum 6 caractères">
+                        <small class="text-muted">Minimum 6 caractères</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="confirm_password" class="form-label">
+                            <i class="bi bi-lock-fill"></i> Confirmer le mot de passe *
+                        </label>
+                        <input 
+                            type="password" 
+                            class="form-control" 
+                            id="confirm_password" 
+                            name="confirm_password" 
+                            required
+                            minlength="6"
+                            placeholder="Retapez votre mot de passe">
+                        <div id="passwordMatchMessage" class="mt-1"></div>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                            <i class="bi bi-person-plus"></i> S'inscrire
+                        </button>
+                    </div>
+                </form>
+
+                <hr class="my-4">
+
+                <p class="text-center mb-0">
+                    Vous avez déjà un compte? 
+                    <a href="{{ url_for('auth.login') }}" class="text-decoration-none">
+                        <i class="bi bi-box-arrow-in-right"></i> Se connecter
+                    </a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Real-time password match validation
+const password = document.getElementById('password');
+const confirmPassword = document.getElementById('confirm_password');
+const messageDiv = document.getElementById('passwordMatchMessage');
+const submitBtn = document.getElementById('submitBtn');
+
+function checkPasswordMatch() {
+    if (confirmPassword.value === '') {
+        messageDiv.innerHTML = '';
+        submitBtn.disabled = false;
+        return;
+    }
+    
+    if (password.value === confirmPassword.value) {
+        messageDiv.innerHTML = '<small class="text-success"><i class="bi bi-check-circle"></i> Les mots de passe correspondent</small>';
+        submitBtn.disabled = false;
+    } else {
+        messageDiv.innerHTML = '<small class="text-danger"><i class="bi bi-x-circle"></i> Les mots de passe ne correspondent pas</small>';
+        submitBtn.disabled = true;
+    }
+}
+
+password.addEventListener('input', checkPasswordMatch);
+confirmPassword.addEventListener('input', checkPasswordMatch);
+
+// Form submission validation
+document.getElementById('registerForm').addEventListener('submit', function(e) {
+    if (password.value !== confirmPassword.value) {
+        e.preventDefault();
+        alert('⚠️ Les mots de passe ne correspondent pas!');
+        return false;
+    }
+    
+    // Disable button to prevent double submission
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Inscription en cours...';
+});
+</script>
+{% endblock %}

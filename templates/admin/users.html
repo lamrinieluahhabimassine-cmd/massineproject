@@ -1,0 +1,283 @@
+{% extends "base.html" %}
+
+{% block title %}Gestion des Utilisateurs - Admin{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="display-6">
+            <i class="bi bi-people-fill"></i> Gestion des Utilisateurs
+        </h1>
+        <p class="text-muted">Gérer les utilisateurs et leurs rôles</p>
+    </div>
+    <div class="col-auto">
+        <a href="{{ url_for('admin.export_users') }}" class="btn btn-success">
+            <i class="bi bi-download"></i> Exporter CSV
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="bi bi-list"></i> Liste des Utilisateurs ({{ users|length }})
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nom d'utilisateur</th>
+                        <th>Email</th>
+                        <th>Rôle</th>
+                        <th>Statut</th>
+                        <th>Dossiers</th>
+                        <th>Créé le</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr class="{% if not user.is_active %}table-secondary{% endif %}">
+                        <td>{{ user.id }}</td>
+                        <td>
+                            <i class="bi bi-person-circle"></i>
+                            <strong>{{ user.username }}</strong>
+                            {% if user.id == current_user.id %}
+                            <span class="badge bg-primary">Vous</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ user.email }}</td>
+                        <td>
+                            {% if user.role == 'admin' %}
+                            <span class="badge bg-danger">
+                                <i class="bi bi-shield-check"></i> Admin
+                            </span>
+                            {% elif user.role == 'invoicing' %}
+                            <span class="badge bg-warning text-dark">
+                                <i class="bi bi-receipt"></i> Facturation
+                            </span>
+                            {% elif user.role == 'affecteur' %}
+                            <span class="badge bg-info">
+                                <i class="bi bi-upload"></i> Affecteur
+                            </span>
+                            {% elif user.role == 'évaluateur' %}
+                            <span class="badge bg-success">
+                                <i class="bi bi-clipboard-check"></i> Évaluateur
+                            </span>
+                            {% else %}
+                            <span class="badge bg-secondary">
+                                <i class="bi bi-person"></i> User
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if user.is_active %}
+                            <span class="badge bg-success">Actif</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Inactif</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{{ url_for('admin.user_files', user_id=user.id) }}" class="text-decoration-none">
+                                Total: <strong>{{ user_stats[user.id]['total_files'] }}</strong><br>
+                                <small class="text-muted">
+                                    Finalisés: {{ user_stats[user.id]['finalized'] }}
+                                </small>
+                            </a>
+                        </td>
+                        <td>{{ user.created_at.strftime('%d/%m/%Y') }}</td>
+                        <td>
+                            {% if user.id != current_user.id %}
+                            <div class="btn-group" role="group">
+                                <!-- Toggle Active/Inactive -->
+                                <a href="{{ url_for('admin.toggle_user_status', user_id=user.id) }}" 
+                                   class="btn btn-sm btn-outline-{% if user.is_active %}warning{% else %}success{% endif %}"
+                                   title="{% if user.is_active %}Désactiver{% else %}Activer{% endif %}">
+                                    <i class="bi bi-{% if user.is_active %}x-circle{% else %}check-circle{% endif %}"></i>
+                                </a>
+                                
+                                <!-- Role Dropdown -->
+                                <div class="btn-group" role="group">
+                                    <button type="button" 
+                                            class="btn btn-sm btn-outline-primary dropdown-toggle" 
+                                            data-bs-toggle="dropdown" 
+                                            aria-expanded="false"
+                                            title="Changer le rôle">
+                                        <i class="bi bi-person-gear"></i> Rôle
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li>
+                                            <a class="dropdown-item {% if user.role == 'user' %}active{% endif %}" 
+                                               href="{{ url_for('admin.set_user_role', user_id=user.id, role='user') }}"
+                                               onclick="return confirm('Changer le rôle de {{ user.username }} en Utilisateur ?');">
+                                                <i class="bi bi-person"></i> Utilisateur
+                                                {% if user.role == 'user' %}
+                                                <i class="bi bi-check-circle-fill text-success float-end"></i>
+                                                {% endif %}
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item {% if user.role == 'évaluateur' %}active{% endif %}" 
+                                               href="{{ url_for('admin.set_user_role', user_id=user.id, role='évaluateur') }}"
+                                               onclick="return confirm('Changer le rôle de {{ user.username }} en Évaluateur ?');">
+                                                <i class="bi bi-clipboard-check"></i> Évaluateur
+                                                {% if user.role == 'évaluateur' %}
+                                                <i class="bi bi-check-circle-fill text-success float-end"></i>
+                                                {% endif %}
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item {% if user.role == 'invoicing' %}active{% endif %}" 
+                                               href="{{ url_for('admin.set_user_role', user_id=user.id, role='invoicing') }}"
+                                               onclick="return confirm('Changer le rôle de {{ user.username }} en Facturation ?');">
+                                                <i class="bi bi-receipt"></i> Facturation
+                                                {% if user.role == 'invoicing' %}
+                                                <i class="bi bi-check-circle-fill text-success float-end"></i>
+                                                {% endif %}
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item {% if user.role == 'affecteur' %}active{% endif %}" 
+                                               href="{{ url_for('admin.set_user_role', user_id=user.id, role='affecteur') }}"
+                                               onclick="return confirm('Changer le rôle de {{ user.username }} en Affecteur ?');">
+                                                <i class="bi bi-upload"></i> Affecteur
+                                                {% if user.role == 'affecteur' %}
+                                                <i class="bi bi-check-circle-fill text-success float-end"></i>
+                                                {% endif %}
+                                            </a>
+                                        </li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li>
+                                            <a class="dropdown-item {% if user.role == 'admin' %}active{% endif %}" 
+                                               href="{{ url_for('admin.set_user_role', user_id=user.id, role='admin') }}"
+                                               onclick="return confirm('⚠️ ATTENTION: Changer le rôle de {{ user.username }} en Administrateur ? Cela donnera tous les privilèges.');">
+                                                <i class="bi bi-shield-check"></i> Administrateur
+                                                {% if user.role == 'admin' %}
+                                                <i class="bi bi-check-circle-fill text-success float-end"></i>
+                                                {% endif %}
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                                
+                                <!-- View Files -->
+                                <a href="{{ url_for('admin.user_files', user_id=user.id) }}" 
+                                   class="btn btn-sm btn-outline-secondary"
+                                   title="Voir les dossiers">
+                                    <i class="bi bi-folder"></i>
+                                </a>
+                            </div>
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Legend -->
+<div class="card mt-4">
+    <div class="card-header">
+        <h6 class="mb-0"><i class="bi bi-info-circle"></i> Légende et Actions</h6>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <h6 class="text-muted">Rôles Disponibles:</h6>
+                <ul class="list-unstyled">
+                    <li class="mb-2">
+                        <span class="badge bg-secondary"><i class="bi bi-person"></i> Utilisateur</span> 
+                        - Peut créer et gérer ses propres dossiers
+                    </li>
+                    <li class="mb-2">
+                        <span class="badge bg-success"><i class="bi bi-clipboard-check"></i> Évaluateur</span> 
+                        - Évalue les dossiers et décide du statut (Soumis/Non-soumis/Dispensé)
+                    </li>
+                    <li class="mb-2">
+                        <span class="badge bg-warning text-dark"><i class="bi bi-receipt"></i> Facturation</span> 
+                        - Accès au dashboard de facturation, traite les dossiers "prêts à facturer"
+                    </li>
+                    <li class="mb-2">
+                        <span class="badge bg-info"><i class="bi bi-upload"></i> Affecteur</span> 
+                        - Affecte des dossiers en masse via fichiers Excel
+                    </li>
+                    <li class="mb-2">
+                        <span class="badge bg-danger"><i class="bi bi-shield-check"></i> Admin</span> 
+                        - Accès complet: gestion des utilisateurs, tous les dossiers, statistiques
+                    </li>
+                </ul>
+            </div>
+            <div class="col-md-6">
+                <h6 class="text-muted">Actions Disponibles:</h6>
+                <ul class="list-unstyled">
+                    <li class="mb-2">
+                        <i class="bi bi-x-circle text-warning"></i> / <i class="bi bi-check-circle text-success"></i> 
+                        Activer/Désactiver l'utilisateur
+                    </li>
+                    <li class="mb-2">
+                        <i class="bi bi-person-gear text-primary"></i> 
+                        Changer le rôle (Utilisateur / Évaluateur / Facturation / Affecteur / Admin)
+                    </li>
+                    <li class="mb-2">
+                        <i class="bi bi-folder text-secondary"></i> 
+                        Voir tous les dossiers de l'utilisateur
+                    </li>
+                </ul>
+                <p class="text-muted mb-0">
+                    <small>
+                        <i class="bi bi-shield-lock"></i> 
+                        <strong>Note:</strong> Vous ne pouvez pas modifier votre propre compte pour des raisons de sécurité.
+                    </small>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Stats -->
+<div class="row mt-4">
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="bi bi-people display-4 text-primary"></i>
+                <h3 class="mt-2">{{ users|length }}</h3>
+                <p class="text-muted mb-0">Total Utilisateurs</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="bi bi-check-circle display-4 text-success"></i>
+                <h3 class="mt-2">{{ users|selectattr('is_active', 'equalto', True)|list|length }}</h3>
+                <p class="text-muted mb-0">Utilisateurs Actifs</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="bi bi-receipt display-4 text-warning"></i>
+                <h3 class="mt-2">{{ users|selectattr('role', 'equalto', 'invoicing')|list|length }}</h3>
+                <p class="text-muted mb-0">Équipe Facturation</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="bi bi-upload display-4 text-info"></i>
+                <h3 class="mt-2">{{ users|selectattr('role', 'equalto', 'affecteur')|list|length }}</h3>
+                <p class="text-muted mb-0">Affecteurs</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,250 @@
+{% extends "base.html" %}
+
+{% block title %}Mon Tableau de Bord{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="display-6">
+            <i class="bi bi-speedometer2"></i> Mon Tableau de Bord
+        </h1>
+        <p class="text-muted">Bienvenue, {{ current_user.username }}!</p>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="display-4 text-primary">{{ stats.total }}</h3>
+                <p class="text-muted mb-0">Total Dossiers</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="display-4 text-success">{{ stats.payed }}</h3>
+                <p class="text-muted mb-0">Payed</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="display-4 text-info">{{ stats.in_progress }}</h3>
+                <p class="text-muted mb-0">En Cours</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="display-4 text-secondary">{{ stats.finalized }}</h3>
+                <p class="text-muted mb-0">Finalisés</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Self-Assignment Section -->
+{% if unassigned_payed_files %}
+<div class="card border-success mb-4">
+    <div class="card-header bg-success text-white">
+        <h5 class="mb-0">
+            <i class="bi bi-hand-index"></i> Auto-Affectation - Dossiers Payed Disponibles
+        </h5>
+    </div>
+    <div class="card-body">
+        <p class="text-muted mb-3">
+            Sélectionnez un dossier "Payed" pour vous l'affecter et commencer le traitement:
+        </p>
+        <div class="row align-items-end">
+            <div class="col-md-10">
+                <select class="form-select" id="fileSelect">
+                    <option value="">-- Choisir un dossier --</option>
+                    {% for file in unassigned_payed_files %}
+                    <option value="{{ file.id }}" data-file="{{ file.file_number }}">
+                        {{ file.file_number }} - {{ file.importer }} → {{ file.exporter }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-success w-100" id="assignBtn" onclick="assignFile()" disabled>
+                    <i class="bi bi-check-circle"></i> S'Affecter
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- À Compléter Section -->
+{% set completion_files = files|selectattr('status', 'equalto', 'à compléter')|list %}
+{% if completion_files %}
+<div class="card border-warning mb-4">
+    <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="bi bi-exclamation-circle-fill"></i> À Compléter ({{ completion_files|length }})
+        </h5>
+    </div>
+    <div class="list-group list-group-flush">
+        {% for file in completion_files %}
+        <div class="list-group-item">
+            <div class="row align-items-start">
+                <div class="col">
+                    <h6 class="mb-1">
+                        <strong>{{ file.file_number }}</strong>
+                        <span class="badge bg-warning text-dark ms-2">À Compléter</span>
+                    </h6>
+                    <p class="mb-1 text-muted small">
+                        <i class="bi bi-building"></i> {{ file.importer }} → 
+                        <i class="bi bi-shop"></i> {{ file.exporter }}
+                    </p>
+                    {% if file.completion_description %}
+                    <div class="alert alert-warning mb-2 py-2" style="font-size: 0.85rem;">
+                        <strong>Description:</strong>
+                        <p class="mb-0" style="white-space: pre-wrap;">{{ file.completion_description[:150] }}{% if file.completion_description|length > 150 %}...{% endif %}</p>
+                    </div>
+                    {% endif %}
+                    <small class="text-muted">
+                        <i class="bi bi-calendar"></i> 
+                        {% if file.completion_date %}
+                            Marqué le {{ file.completion_date.strftime('%d/%m/%Y à %H:%M') }}
+                        {% endif %}
+                    </small>
+                </div>
+                <div class="col-auto">
+                    <a href="{{ url_for('user.view_file', file_id=file.id) }}" class="btn btn-sm btn-warning">
+                        <i class="bi bi-eye"></i> Voir détails
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Alerts -->
+{% if overdue_files %}
+<div class="alert alert-warning">
+    <h5 class="alert-heading">
+        <i class="bi bi-exclamation-triangle-fill"></i> 
+        Rappels ({{ overdue_files|length }})
+    </h5>
+    <p>Les dossiers suivants nécessitent votre attention :</p>
+    <ul class="mb-0">
+        {% for file in overdue_files %}
+        <li>
+            <a href="{{ url_for('user.view_file', file_id=file.id) }}" class="alert-link">
+                {{ file.file_number }}
+            </a>
+            - Date rappel: {{ file.recall_date.strftime('%d/%m/%Y') }}
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+<!-- Files Table -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="bi bi-folder"></i> Mes Dossiers (Payed et Après)
+        </h5>
+    </div>
+    <div class="card-body">
+        {% if files %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Numéro</th>
+                        <th>Importateur</th>
+                        <th>Exportateur</th>
+                        <th>Pays</th>
+                        <th>Route</th>
+                        <th>Statut</th>
+                        <th>Date Réception</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for file in files %}
+                    <tr class="{% if file.is_overdue() %}table-warning{% endif %}">
+                        <td>
+                            <strong>{{ file.file_number }}</strong>
+                            {% if file.is_overdue() %}
+                            <i class="bi bi-exclamation-triangle text-warning" title="Rappel!"></i>
+                            {% endif %}
+                        </td>
+                        <td>{{ file.importer }}</td>
+                        <td>{{ file.exporter }}</td>
+                        <td>{{ file.country }}</td>
+                        <td>
+                            <span class="badge bg-secondary">{{ file.route }}</span>
+                        </td>
+                        <td>
+                            {% if file.status == 'Finalized' %}
+                            <span class="badge bg-secondary">{{ file.status }}</span>
+                            {% elif file.status == 'payed' %}
+                            <span class="badge bg-success">{{ file.status }}</span>
+                            {% elif file.status == 'en cours de traitement' %}
+                            <span class="badge bg-info">{{ file.status }}</span>
+                            {% elif file.status == 'à compléter' %}
+                            <span class="badge bg-warning text-dark">{{ file.status }}</span>
+                            {% else %}
+                            <span class="badge bg-primary">{{ file.status }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ file.receipt_date.strftime('%d/%m/%Y') }}</td>
+                        <td>
+                            <a href="{{ url_for('user.view_file', file_id=file.id) }}" 
+                               class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-eye"></i> Voir
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-inbox display-1 text-muted"></i>
+            <p class="text-muted mt-3">Aucun dossier à traiter pour le moment.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function assignFile() {
+    const select = document.getElementById('fileSelect');
+    const fileId = select.value;
+    const fileName = select.options[select.selectedIndex].dataset.file;
+    
+    if (!fileId) {
+        alert('Veuillez sélectionner un dossier');
+        return;
+    }
+    
+    if (confirm(`Vous êtes sur de vouloir vous affecter le dossier ${fileName} ?`)) {
+        // Create and submit form
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/user/files/self-assign/${fileId}`;
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+// Enable/disable button based on selection
+document.getElementById('fileSelect').addEventListener('change', function() {
+    document.getElementById('assignBtn').disabled = !this.value;
+});
+</script>
+{% endblock %}

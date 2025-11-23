@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Ajouter CoC - {{ file.file_number }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0">
+                    <i class="bi bi-award"></i> Ajouter Certificate of Conformity (CoC)
+                </h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i>
+                    <strong>Dossier:</strong> {{ file.file_number }}<br>
+                    <strong>Statut:</strong> <span class="badge bg-success">{{ file.status }}</span>
+                </div>
+
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="coc_date" class="form-label">
+                            <i class="bi bi-calendar"></i> Date CoC *
+                        </label>
+                        <input 
+                            type="date" 
+                            class="form-control" 
+                            id="coc_date" 
+                            name="coc_date" 
+                            required>
+                        <small class="text-muted">Date d'émission du Certificate of Conformity</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="coc_number" class="form-label">
+                            <i class="bi bi-file-text"></i> Numéro CoC *
+                        </label>
+                        <input 
+                            type="text" 
+                            class="form-control" 
+                            id="coc_number" 
+                            name="coc_number" 
+                            required
+                            placeholder="Ex: COC-2025-12345">
+                        <small class="text-muted">Numéro unique du Certificate of Conformity</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="invoice_number" class="form-label">
+                            <i class="bi bi-receipt"></i> Numéro de Facture *
+                        </label>
+                        <input 
+                            type="text" 
+                            class="form-control" 
+                            id="invoice_number" 
+                            name="invoice_number" 
+                            required
+                            placeholder="Ex: INV-2025-001">
+                        <small class="text-muted">Numéro de facture associé</small>
+                    </div>
+
+                    <hr>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('user.view_file', file_id=file.id) }}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Annuler
+                        </a>
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="bi bi-check-circle"></i> Ajouter CoC
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="alert alert-warning mt-3">
+            <i class="bi bi-exclamation-triangle"></i>
+            <strong>Attention:</strong> Les détails CoC ne peuvent être ajoutés qu'une seule fois. 
+            Vérifiez bien toutes les informations avant de soumettre.
+        </div>
+    </div>
+</div>
+
+<script>
+// Set today's date as max for coc_date
+document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('coc_date').setAttribute('max', today);
+});
+</script>
+{% endblock %}

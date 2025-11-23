@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}Dossiers de {{ user.username }} - Admin{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <a href="{{ url_for('admin.users') }}" class="btn btn-outline-secondary mb-3">
+            <i class="bi bi-arrow-left"></i> Retour aux utilisateurs
+        </a>
+        <h1 class="display-6">
+            <i class="bi bi-folder-fill"></i> Dossiers de {{ user.username }}
+        </h1>
+        <p class="text-muted">
+            <i class="bi bi-envelope"></i> {{ user.email }} |
+            <span class="badge bg-{% if user.role == 'admin' %}danger{% else %}secondary{% endif %}">
+                {{ user.role }}
+            </span>
+        </p>
+    </div>
+</div>
+
+<!-- Statistics -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="display-4 text-primary">{{ files|length }}</h3>
+                <p class="text-muted mb-0">Total Dossiers</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="display-4 text-info">{{ files|selectattr('status', 'ne', 'Finalized')|list|length }}</h3>
+                <p class="text-muted mb-0">En Cours</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="display-4 text-success">{{ files|selectattr('status', 'equalto', 'Finalized')|list|length }}</h3>
+                <p class="text-muted mb-0">Finalisés</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Files Table -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-list"></i> Liste des Dossiers</h5>
+    </div>
+    <div class="card-body">
+        {% if files %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Numéro</th>
+                        <th>Importateur</th>
+                        <th>Exportateur</th>
+                        <th>Pays</th>
+                        <th>Route</th>
+                        <th>Statut</th>
+                        <th>Date Réception</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for file in files %}
+                    <tr class="{% if file.is_overdue() %}table-warning{% endif %}">
+                        <td>
+                            <strong>{{ file.file_number }}</strong>
+                            {% if file.is_overdue() %}
+                            <i class="bi bi-exclamation-triangle text-warning"></i>
+                            {% endif %}
+                        </td>
+                        <td>{{ file.importer }}</td>
+                        <td>{{ file.exporter }}</td>
+                        <td>{{ file.country }}</td>
+                        <td><span class="badge bg-secondary">{{ file.route }}</span></td>
+                        <td>
+                            {% if file.status == 'Finalized' %}
+                            <span class="badge bg-success">{{ file.status }}</span>
+                            {% elif file.status == 'en attente d\'évaluation' %}
+                            <span class="badge bg-warning text-dark">{{ file.status }}</span>
+                            {% else %}
+                            <span class="badge bg-info">{{ file.status }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ file.receipt_date.strftime('%d/%m/%Y') }}</td>
+                        <td>
+                            <a href="{{ url_for('user.view_file', file_id=file.id) }}" 
+                               class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-eye"></i> Voir
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-inbox display-1 text-muted"></i>
+            <p class="text-muted mt-3">Cet utilisateur n'a aucun dossier.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

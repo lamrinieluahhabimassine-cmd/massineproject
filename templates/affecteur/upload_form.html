@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+
+{% block title %}Téléverser Fichier Excel{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col">
+        <a href="{{ url_for('affecteur.dashboard') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Retour au tableau de bord
+        </a>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    <i class="bi bi-upload"></i> Téléverser un Fichier Excel
+                </h4>
+            </div>
+            <div class="card-body">
+                <!-- Instructions -->
+                <div class="alert alert-info">
+                    <h6 class="alert-heading">
+                        <i class="bi bi-info-circle"></i> Instructions
+                    </h6>
+                    <hr>
+                    <ol class="mb-0">
+                        <li>Téléchargez d'abord le <a href="{{ url_for('affecteur.download_template') }}" class="alert-link">modèle Excel</a></li>
+                        <li>Remplissez toutes les colonnes requises</li>
+                        <li>Vérifiez que les emails des utilisateurs existent</li>
+                        <li>Sélectionnez votre fichier ci-dessous</li>
+                    </ol>
+                </div>
+
+                <!-- Upload Form -->
+                <form method="POST" enctype="multipart/form-data" id="uploadForm">
+                    <div class="mb-4">
+                        <label for="excel_file" class="form-label">
+                            <i class="bi bi-file-earmark-excel"></i> Fichier Excel *
+                        </label>
+                        <input 
+                            type="file" 
+                            class="form-control form-control-lg" 
+                            id="excel_file" 
+                            name="excel_file" 
+                            required
+                            accept=".xlsx,.xls">
+                        <small class="text-muted">
+                            Formats acceptés: .xlsx, .xls (Max 16MB)
+                        </small>
+                        <div id="fileInfo" class="mt-2 text-muted small"></div>
+                    </div>
+
+                    <hr>
+
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <strong>Vérifications automatiques:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>Validation de toutes les colonnes requises</li>
+                            <li>Vérification de l'existence des utilisateurs</li>
+                            <li>Contrôle des numéros de dossiers uniques</li>
+                            <li>Validation des routes et numéros SOR/SOL</li>
+                        </ul>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('affecteur.dashboard') }}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Annuler
+                        </a>
+                        <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                            <i class="bi bi-upload"></i> Téléverser et Affecter
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Format Reference -->
+        <div class="card mt-4">
+            <div class="card-header bg-secondary text-white">
+                <h6 class="mb-0"><i class="bi bi-table"></i> Format Requis du Fichier Excel</h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-sm">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Colonne</th>
+                                <th>Type</th>
+                                <th>Requis</th>
+                                <th>Exemple</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>file_number</code></td>
+                                <td>Texte</td>
+                                <td><span class="badge bg-danger">Oui</span></td>
+                                <td>VOC-2025-001</td>
+                            </tr>
+                            <tr>
+                                <td><code>receipt_date</code></td>
+                                <td>Date</td>
+                                <td><span class="badge bg-danger">Oui</span></td>
+                                <td>2025-11-09</td>
+                            </tr>
+                            <tr>
+                                <td><code>importer</code></td>
+                                <td>Texte</td>
+                                <td><span class="badge bg-danger">Oui</span></td>
+                                <td>Company A</td>
+                            </tr>
+                            <tr>
+                                <td><code>exporter</code></td>
+                                <td>Texte</td>
+                                <td><span class="badge bg-danger">Oui</span></td>
+                                <td>Company B</td>
+                            </tr>
+                            <tr>
+                                <td><code>country</code></td>
+                                <td>Texte</td>
+                                <td><span class="badge bg-danger">Oui</span></td>
+                                <td>France</td>
+                            </tr>
+                            <tr>
+                                <td><code>route</code></td>
+                                <td>A, B ou C</td>
+                                <td><span class="badge bg-danger">Oui</span></td>
+                                <td>B</td>
+                            </tr>
+                            <tr>
+                                <td><code>sor_number</code></td>
+                                <td>Texte</td>
+                                <td><span class="badge bg-warning">Si Route B</span></td>
+                                <td>SOR-123</td>
+                            </tr>
+                            <tr>
+                                <td><code>sol_number</code></td>
+                                <td>Texte</td>
+                                <td><span class="badge bg-warning">Si Route C</span></td>
+                                <td>SOL-456</td>
+                            </tr>
+                            <tr>
+                                <td><code>user_email</code></td>
+                                <td>Email</td>
+                                <td><span class="badge bg-danger">Oui</span></td>
+                                <td>john@company.com</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Download Template -->
+        <div class="text-center mt-4">
+            <a href="{{ url_for('affecteur.download_template') }}" class="btn btn-success btn-lg">
+                <i class="bi bi-download"></i> Télécharger le Modèle Excel
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+// File info display
+document.getElementById('excel_file').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    const fileInfo = document.getElementById('fileInfo');
+    
+    if (file) {
+        const maxSize = 16 * 1024 * 1024; // 16MB
+        const fileSize = (file.size / (1024 * 1024)).toFixed(2);
+        
+        if (file.size > maxSize) {
+            alert('⚠️ Le fichier est trop volumineux! Taille maximale: 16MB\nTaille du fichier: ' + fileSize + ' MB');
+            e.target.value = '';
+            fileInfo.innerHTML = '';
+        } else {
+            const extension = file.name.split('.').pop().toLowerCase();
+            if (extension === 'xlsx' || extension === 'xls') {
+                fileInfo.innerHTML = '<i class="bi bi-check-circle text-success"></i> Fichier sélectionné: <strong>' + file.name + '</strong> (' + fileSize + ' MB)';
+            } else {
+                alert('⚠️ Format de fichier invalide! Utilisez .xlsx ou .xls');
+                e.target.value = '';
+                fileInfo.innerHTML = '';
+            }
+        }
+    }
+});
+
+// Form submission
+document.getElementById('uploadForm').addEventListener('submit', function(e) {
+    const file = document.getElementById('excel_file').files[0];
+    
+    if (!file) {
+        alert('⚠️ Veuillez sélectionner un fichier Excel!');
+        e.preventDefault();
+        return false;
+    }
+    
+    if (!confirm('🚀 Confirmer le téléversement?\n\nFichier: ' + file.name + '\n\nLes dossiers seront créés et affectés automatiquement.')) {
+        e.preventDefault();
+        return false;
+    }
+    
+    // Disable submit button to prevent double submission
+    document.getElementById('submitBtn').disabled = true;
+    document.getElementById('submitBtn').innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Traitement en cours...';
+});
+</script>
+{% endblock %}

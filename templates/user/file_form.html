@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+
+{% block title %}{% if edit %}Modifier{% else %}Créer{% endif %} Dossier{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <a href="{{ url_for('user.dashboard') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Retour au tableau de bord
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    {% if edit %}
+                    <i class="bi bi-pencil"></i> Modifier le dossier {{ file.file_number }}
+                    {% else %}
+                    <i class="bi bi-plus-circle"></i> Créer un nouveau dossier
+                    {% endif %}
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <!-- File Number -->
+                    <div class="mb-3">
+                        <label for="fileNumber" class="form-label">
+                            <i class="bi bi-hash"></i> Numéro de Dossier <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control" id="fileNumber" name="file_number" 
+                               value="{{ file.file_number if edit else '' }}" 
+                               placeholder="ex: VOC-2025-001" required {% if edit %}readonly{% endif %}>
+                        <small class="text-muted">Format: VOC-YYYY-XXX</small>
+                    </div>
+
+                    <!-- Receipt Date -->
+                    <div class="mb-3">
+                        <label for="receiptDate" class="form-label">
+                            <i class="bi bi-calendar"></i> Date de Réception <span class="text-danger">*</span>
+                        </label>
+                        <input type="date" class="form-control" id="receiptDate" name="receipt_date" 
+                               value="{{ file.receipt_date.strftime('%Y-%m-%d') if edit and file.receipt_date else '' }}" required>
+                    </div>
+
+                    <div class="row">
+                        <!-- Importer -->
+                        <div class="col-md-6 mb-3">
+                            <label for="importer" class="form-label">
+                                <i class="bi bi-building"></i> Importateur <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="importer" name="importer" 
+                                   value="{{ file.importer if edit else '' }}" 
+                                   placeholder="Nom de l'importateur" required>
+                        </div>
+
+                        <!-- Exporter -->
+                        <div class="col-md-6 mb-3">
+                            <label for="exporter" class="form-label">
+                                <i class="bi bi-shop"></i> Exportateur <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="exporter" name="exporter" 
+                                   value="{{ file.exporter if edit else '' }}" 
+                                   placeholder="Nom de l'exportateur" required>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- Country -->
+                        <div class="col-md-6 mb-3">
+                            <label for="country" class="form-label">
+                                <i class="bi bi-globe"></i> Pays <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="country" name="country" 
+                                   value="{{ file.country if edit else '' }}" 
+                                   placeholder="ex: France" required>
+                        </div>
+
+                        <!-- Route -->
+                        <div class="col-md-6 mb-3">
+                            <label for="route" class="form-label">
+                                <i class="bi bi-signpost"></i> Route <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" id="route" name="route" required onchange="toggleRouteFields()">
+                                <option value="">-- Sélectionner une route --</option>
+                                <option value="A" {% if edit and file.route == 'A' %}selected{% endif %}>Route A</option>
+                                <option value="B" {% if edit and file.route == 'B' %}selected{% endif %}>Route B (SOR)</option>
+                                <option value="C" {% if edit and file.route == 'C' %}selected{% endif %}>Route C (SOL)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- SOR Number (Route B) -->
+                    <div class="mb-3" id="sorField" style="display: none;">
+                        <label for="sorNumber" class="form-label">
+                            <i class="bi bi-file-text"></i> Numéro SOR <span class="text-danger">*</span> (Route B)
+                        </label>
+                        <input type="text" class="form-control" id="sorNumber" name="sor_number" 
+                               value="{{ file.sor_number if edit and file.route == 'B' else '' }}" 
+                               placeholder="Numéro SOR">
+                        <small class="text-muted">Obligatoire pour Route B</small>
+                    </div>
+
+                    <!-- SOL Number (Route C) -->
+                    <div class="mb-3" id="solField" style="display: none;">
+                        <label for="solNumber" class="form-label">
+                            <i class="bi bi-file-text"></i> Numéro SOL <span class="text-danger">*</span> (Route C)
+                        </label>
+                        <input type="text" class="form-control" id="solNumber" name="sol_number" 
+                               value="{{ file.sol_number if edit and file.route == 'C' else '' }}" 
+                               placeholder="Numéro SOL">
+                        <small class="text-muted">Obligatoire pour Route C</small>
+                    </div>
+
+                    <!-- Status -->
+                    <div class="mb-3">
+                        <label for="status" class="form-label">
+                            <i class="bi bi-tag"></i> Statut <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-select" id="status" name="status" required onchange="toggleCompletionField()">
+                            <option value="">-- Sélectionner un statut --</option>
+                            <option value="en attente d'évaluation" {% if edit and file.status == 'en attente d\'évaluation' %}selected{% endif %}>En attente d'évaluation</option>
+                            <option value="en cours d'évaluation" {% if edit and file.status == 'en cours d\'évaluation' %}selected{% endif %}>En cours d'évaluation</option>
+                            <option value="ready to invoice" {% if edit and file.status == 'ready to invoice' %}selected{% endif %}>Ready to invoice</option>
+                            <option value="payed" {% if edit and file.status == 'payed' %}selected{% endif %}>Payed</option>
+                            <option value="en cours de traitement" {% if edit and file.status == 'en cours de traitement' %}selected{% endif %}>En cours de traitement</option>
+                            <option value="à compléter" {% if edit and file.status == 'à compléter' %}selected{% endif %}>À Compléter</option>
+                            <option value="transfert à l'inspection" {% if edit and file.status == 'transfert à l\'inspection' %}selected{% endif %}>Transfert à l'inspection</option>
+                            <option value="Finalized" {% if edit and file.status == 'Finalized' %}selected{% endif %}>Finalized</option>
+                        </select>
+                    </div>
+
+                    <!-- Completion Description (À Compléter) -->
+                    <div class="mb-3" id="completionField" style="display: none;">
+                        <label for="completionDesc" class="form-label">
+                            <i class="bi bi-pencil-square"></i> Description à Compléter <span class="text-danger">*</span>
+                        </label>
+                        <textarea class="form-control" id="completionDesc" name="completion_description" 
+                                  rows="4" placeholder="Décrivez ce qui manque ou ce qui doit être complété...">{{ file.completion_description if edit else '' }}</textarea>
+                        <small class="text-muted">Soyez aussi précis que possible.</small>
+                    </div>
+
+                    <!-- Recall Date -->
+                    <div class="mb-3">
+                        <label for="recallDate" class="form-label">
+                            <i class="bi bi-alarm"></i> Date de Rappel (Optionnel)
+                        </label>
+                        <input type="date" class="form-control" id="recallDate" name="recall_date" 
+                               value="{{ file.recall_date.strftime('%Y-%m-%d') if edit and file.recall_date else '' }}">
+                        <small class="text-muted">Date limite pour finaliser ce dossier</small>
+                    </div>
+
+                    <hr>
+
+                    <!-- Buttons -->
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('user.dashboard') }}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Annuler
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> {% if edit %}Mettre à jour{% else %}Créer{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Info Sidebar -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0"><i class="bi bi-info-circle"></i> Aide</h6>
+            </div>
+            <div class="card-body">
+                <h6>Routes</h6>
+                <p class="small">
+                    <strong>Route A:</strong> Standard<br>
+                    <strong>Route B:</strong> Nécessite un numéro SOR<br>
+                    <strong>Route C:</strong> Nécessite un numéro SOL
+                </p>
+                
+                <hr>
+
+                <h6>Statuts</h6>
+                <p class="small">
+                    <strong>À Compléter:</strong> Ajoutez une description de ce qui manque<br>
+                    <strong>Finalized:</strong> Dossier terminé
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleRouteFields() {
+    const route = document.getElementById('route').value;
+    document.getElementById('sorField').style.display = route === 'B' ? 'block' : 'none';
+    document.getElementById('solField').style.display = route === 'C' ? 'block' : 'none';
+}
+
+function toggleCompletionField() {
+    const status = document.getElementById('status').value;
+    document.getElementById('completionField').style.display = status === 'à compléter' ? 'block' : 'none';
+}
+
+// Call on page load to show/hide fields based on current values
+document.addEventListener('DOMContentLoaded', function() {
+    toggleRouteFields();
+    toggleCompletionField();
+});
+</script>
+{% endblock %}

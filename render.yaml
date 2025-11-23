@@ -1,0 +1,35 @@
+services:
+  # Web Service
+  - type: web
+    name: voc-platform
+    runtime: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn app:create_app()"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: SECRET_KEY
+        generateValue: true
+      - key: FLASK_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: voc-platform-db
+          property: connectionString
+      - key: MAIL_SERVER
+        value: smtp.gmail.com
+      - key: MAIL_PORT
+        value: 587
+      - key: MAIL_USERNAME
+        sync: false
+      - key: MAIL_PASSWORD
+        sync: false
+      - key: MAIL_DEFAULT_SENDER
+        value: noreply@gmail.com
+
+  # PostgreSQL Database
+  - type: pgsql
+    name: voc-platform-db
+    databaseName: voc_platform
+    user: voc_user
+    plan: free

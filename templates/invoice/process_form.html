@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block title %}Traiter Facturation - {{ file.file_number }}{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col">
+        <a href="{{ url_for('invoice.dashboard') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Retour au tableau de bord
+        </a>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    <i class="bi bi-receipt-cutoff"></i> Traiter la Facturation
+                </h4>
+            </div>
+            <div class="card-body">
+                <!-- File Information -->
+                <div class="alert alert-info">
+                    <h5 class="alert-heading">
+                        <i class="bi bi-info-circle"></i> Informations du Dossier
+                    </h5>
+                    <hr>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Numéro:</strong> {{ file.file_number }}</p>
+                            <p><strong>Importateur:</strong> {{ file.importer }}</p>
+                            <p><strong>Exportateur:</strong> {{ file.exporter }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Pays:</strong> {{ file.country }}</p>
+                            <p><strong>Route:</strong> {{ file.route }}</p>
+                            <p><strong>Propriétaire:</strong> {{ file.owner.username }} ({{ file.owner.email }})</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Invoice Form -->
+                <form method="POST" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="mar_number" class="form-label">
+                            <i class="bi bi-hash"></i> Numéro MAR *
+                        </label>
+                        <input 
+                            type="text" 
+                            class="form-control" 
+                            id="mar_number" 
+                            name="mar_number" 
+                            required
+                            placeholder="Ex: MAR-2025-001"
+                            maxlength="100">
+                        <small class="text-muted">Numéro de Mise à Régularisation</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="proforma_number" class="form-label">
+                            <i class="bi bi-file-text"></i> Numéro ProForma *
+                        </label>
+                        <input 
+                            type="text" 
+                            class="form-control" 
+                            id="proforma_number" 
+                            name="proforma_number" 
+                            required
+                            placeholder="Ex: PF-2025-001"
+                            maxlength="100">
+                        <small class="text-muted">Numéro de facture ProForma</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="payment_justification" class="form-label">
+                            <i class="bi bi-paperclip"></i> Justificatif de Paiement *
+                        </label>
+                        <input 
+                            type="file" 
+                            class="form-control" 
+                            id="payment_justification" 
+                            name="payment_justification" 
+                            required
+                            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
+                        <small class="text-muted">
+                            Formats acceptés: PDF, DOC, DOCX, JPG, PNG (Max 10MB)
+                        </small>
+                    </div>
+
+                    <hr>
+
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <strong>Important:</strong> En soumettant ce formulaire, le statut du dossier sera automatiquement changé à "Payed" et l'utilisateur propriétaire sera notifié.
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('invoice.dashboard') }}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Annuler
+                        </a>
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="bi bi-check-circle"></i> Soumettre et Marquer comme Payé
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Guidelines Card -->
+        <div class="card mt-4">
+            <div class="card-header bg-secondary text-white">
+                <h6 class="mb-0"><i class="bi bi-lightbulb"></i> Guide de Facturation</h6>
+            </div>
+            <div class="card-body">
+                <ol>
+                    <li><strong>Numéro MAR:</strong> Vérifiez que le numéro MAR est correct et unique</li>
+                    <li><strong>Numéro ProForma:</strong> Utilisez le format standard de votre organisation</li>
+                    <li><strong>Justificatif:</strong> Le fichier doit être clair et lisible</li>
+                    <li><strong>Vérification:</strong> Revérifiez toutes les informations avant de soumettre</li>
+                    <li><strong>Notification:</strong> Le propriétaire du dossier sera notifié automatiquement</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// File size validation
+document.getElementById('payment_justification').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const maxSize = 10 * 1024 * 1024; // 10MB
+        if (file.size > maxSize) {
+            alert('Le fichier est trop volumineux (Max 10MB)');
+            e.target.value = '';
+        }
+    }
+});
+
+// Uppercase MAR and ProForma numbers
+document.getElementById('mar_number').addEventListener('blur', function(e) {
+    e.target.value = e.target.value.toUpperCase();
+});
+
+document.getElementById('proforma_number').addEventListener('blur', function(e) {
+    e.target.value = e.target.value.toUpperCase();
+});
+</script>
+{% endblock %}

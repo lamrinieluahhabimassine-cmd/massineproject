@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Erreur Serveur - 500{% endblock %}
+
+{% block content %}
+<div class="container text-center" style="padding: 100px 0;">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <i class="bi bi-x-octagon display-1 text-danger"></i>
+            <h1 class="display-4 mt-4">500</h1>
+            <h2>Erreur Interne du Serveur</h2>
+            <p class="lead text-muted mt-3">
+                Oups! Quelque chose s'est mal passé. Nos équipes ont été notifiées.
+            </p>
+            
+            <div class="alert alert-warning mt-4">
+                <i class="bi bi-info-circle"></i>
+                <strong>Note:</strong> L'erreur a été enregistrée et sera corrigée rapidement.
+            </div>
+            
+            <div class="mt-5">
+                <a href="{{ url_for('auth.index') }}" class="btn btn-primary btn-lg me-2">
+                    <i class="bi bi-house"></i> Retour à l'accueil
+                </a>
+                <a href="javascript:location.reload()" class="btn btn-outline-secondary btn-lg">
+                    <i class="bi bi-arrow-clockwise"></i> Réessayer
+                </a>
+            </div>
+            
+            <div class="mt-5">
+                <p class="text-muted">
+                    <small>Code erreur: {{ error if error else 'ERR_500' }}</small>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

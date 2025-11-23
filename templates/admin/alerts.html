@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Alertes Rappel - Admin{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="display-6">
+            <i class="bi bi-exclamation-triangle-fill text-warning"></i> Alertes Rappel
+        </h1>
+        <p class="text-muted">Dossiers ayant dépassé leur date de rappel</p>
+    </div>
+    <div class="col-auto">
+        <a href="{{ url_for('admin.trigger_recalls') }}" class="btn btn-primary" 
+           onclick="return confirm('Déclencher la vérification des rappels et envoyer les notifications ?');">
+            <i class="bi bi-bell-fill"></i> Envoyer Rappels Maintenant
+        </a>
+    </div>
+</div>
+
+{% if alert_files %}
+<div class="alert alert-warning">
+    <h5 class="alert-heading">
+        <i class="bi bi-bell-fill"></i> {{ alert_files|length }} dossier(s) en alerte
+    </h5>
+    <p>Ces dossiers nécessitent une attention immédiate.</p>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Numéro</th>
+                        <th>Utilisateur</th>
+                        <th>Importateur</th>
+                        <th>Route</th>
+                        <th>Statut</th>
+                        <th>Date Rappel</th>
+                        <th>Jours Dépassés</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for file in alert_files %}
+                    <tr class="table-warning">
+                        <td>
+                            <strong>{{ file.file_number }}</strong>
+                            <i class="bi bi-exclamation-triangle text-warning"></i>
+                        </td>
+                        <td>
+                            <i class="bi bi-person"></i> {{ file.owner.username }}<br>
+                            <small class="text-muted">{{ file.owner.email }}</small>
+                        </td>
+                        <td>{{ file.importer }}</td>
+                        <td><span class="badge bg-secondary">{{ file.route }}</span></td>
+                        <td>
+                            <span class="badge bg-warning text-dark">{{ file.status }}</span>
+                        </td>
+                        <td>{{ file.recall_date.strftime('%d/%m/%Y') }}</td>
+                        <td>
+                            <span class="badge bg-danger">
+                                {{ (today - file.recall_date).days }} jour(s)
+                            </span>
+                        </td>
+                        <td>
+                            <a href="{{ url_for('user.view_file', file_id=file.id) }}" 
+                               class="btn btn-sm btn-primary">
+                                <i class="bi bi-eye"></i> Voir
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="card">
+    <div class="card-body text-center py-5">
+        <i class="bi bi-check-circle display-1 text-success"></i>
+        <h3 class="mt-3">Aucune alerte!</h3>
+        <p class="text-muted">Tous les dossiers sont à jour.</p>
+        <a href="{{ url_for('admin.dashboard') }}" class="btn btn-primary">
+            <i class="bi bi-arrow-left"></i> Retour au tableau de bord
+        </a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

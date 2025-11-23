@@ -1,0 +1,344 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard Avancé - Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chart-container {
+        position: relative;
+        height: 300px;
+        margin-bottom: 20px;
+    }
+    .stat-card {
+        transition: transform 0.2s;
+    }
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 12px rgba(0,0,0,.15);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="display-6">
+            <i class="bi bi-graph-up"></i> Dashboard Avancé
+        </h1>
+        <p class="text-muted">Statistiques détaillées et analyses</p>
+    </div>
+    <div class="col-auto">
+        <button onclick="window.print()" class="btn btn-outline-secondary">
+            <i class="bi bi-printer"></i> Imprimer
+        </button>
+    </div>
+</div>
+
+<!-- KPI Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card stat-card border-primary">
+            <div class="card-body text-center">
+                <i class="bi bi-folder2-open display-4 text-primary"></i>
+                <h3 class="mt-2">{{ stats.total_files }}</h3>
+                <p class="text-muted mb-0">Total Dossiers</p>
+                <small class="text-success">
+                    <i class="bi bi-arrow-up"></i> +{{ stats.growth }}% ce mois
+                </small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card stat-card border-success">
+            <div class="card-body text-center">
+                <i class="bi bi-check-circle display-4 text-success"></i>
+                <h3 class="mt-2">{{ stats.finalized_files }}</h3>
+                <p class="text-muted mb-0">Finalisés</p>
+                <small class="text-muted">
+                    {{ stats.completion_rate }}% de complétion
+                </small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card stat-card border-warning">
+            <div class="card-body text-center">
+                <i class="bi bi-exclamation-triangle display-4 text-warning"></i>
+                <h3 class="mt-2">{{ stats.overdue_files }}</h3>
+                <p class="text-muted mb-0">En Alerte</p>
+                <small class="text-danger">
+                    Nécessitent attention
+                </small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card stat-card border-info">
+            <div class="card-body text-center">
+                <i class="bi bi-clock-history display-4 text-info"></i>
+                <h3 class="mt-2">{{ stats.avg_processing_days }}</h3>
+                <p class="text-muted mb-0">Jours Moyens</p>
+                <small class="text-muted">
+                    Temps de traitement
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row 1 -->
+<div class="row mb-4">
+    <!-- Status Distribution -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-pie-chart"></i> Distribution par Statut</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="statusChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Route Distribution -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-signpost-split"></i> Distribution par Route</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="routeChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row 2 -->
+<div class="row mb-4">
+    <!-- Timeline -->
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-graph-up"></i> Évolution des Dossiers (30 jours)</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container" style="height: 250px;">
+                    <canvas id="timelineChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Top Countries -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-globe"></i> Top 5 Pays</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="countryChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Performance Table -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-trophy"></i> Performance par Utilisateur</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Utilisateur</th>
+                                <th>Total</th>
+                                <th>Finalisés</th>
+                                <th>En Retard</th>
+                                <th>Taux de Complétion</th>
+                                <th>Performance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in user_performance %}
+                            <tr>
+                                <td>
+                                    <i class="bi bi-person-circle"></i>
+                                    <strong>{{ user.username }}</strong>
+                                </td>
+                                <td>{{ user.total_files }}</td>
+                                <td><span class="badge bg-success">{{ user.finalized }}</span></td>
+                                <td>
+                                    {% if user.overdue > 0 %}
+                                    <span class="badge bg-danger">{{ user.overdue }}</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">0</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar bg-success" 
+                                             style="width: {{ user.completion_rate }}%">
+                                            {{ user.completion_rate }}%
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if user.completion_rate >= 80 %}
+                                    <span class="badge bg-success">Excellent</span>
+                                    {% elif user.completion_rate >= 60 %}
+                                    <span class="badge bg-info">Bon</span>
+                                    {% elif user.completion_rate >= 40 %}
+                                    <span class="badge bg-warning">Moyen</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">À améliorer</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<script>
+// Data from backend
+const statusData = {{ status_data | tojson }};
+const routeData = {{ route_data | tojson }};
+const timelineData = {{ timeline_data | tojson }};
+const countryData = {{ country_data | tojson }};
+
+// Status Chart (Doughnut)
+const statusCtx = document.getElementById('statusChart').getContext('2d');
+new Chart(statusCtx, {
+    type: 'doughnut',
+    data: {
+        labels: statusData.map(d => d.status),
+        datasets: [{
+            data: statusData.map(d => d.count),
+            backgroundColor: [
+                '#ffc107', '#17a2b8', '#007bff', '#6c757d', '#28a745'
+            ]
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+
+// Route Chart (Pie)
+const routeCtx = document.getElementById('routeChart').getContext('2d');
+new Chart(routeCtx, {
+    type: 'pie',
+    data: {
+        labels: routeData.map(d => 'Route ' + d.route),
+        datasets: [{
+            data: routeData.map(d => d.count),
+            backgroundColor: ['#003DA5', '#FFB81C', '#6c757d']
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+
+// Timeline Chart (Line)
+const timelineCtx = document.getElementById('timelineChart').getContext('2d');
+new Chart(timelineCtx, {
+    type: 'line',
+    data: {
+        labels: timelineData.map(d => d.date),
+        datasets: [{
+            label: 'Dossiers créés',
+            data: timelineData.map(d => d.count),
+            borderColor: '#003DA5',
+            backgroundColor: 'rgba(0, 61, 165, 0.1)',
+            tension: 0.4,
+            fill: true
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    stepSize: 1
+                }
+            }
+        }
+    }
+});
+
+// Country Chart (Bar)
+const countryCtx = document.getElementById('countryChart').getContext('2d');
+new Chart(countryCtx, {
+    type: 'bar',
+    data: {
+        labels: countryData.map(d => d.country),
+        datasets: [{
+            label: 'Dossiers',
+            data: countryData.map(d => d.count),
+            backgroundColor: '#FFB81C'
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y',
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            x: {
+                beginAtZero: true,
+                ticks: {
+                    stepSize: 1
+                }
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

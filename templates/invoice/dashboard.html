@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+
+{% block title %}Tableau de Bord Facturation{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="display-6">
+            <i class="bi bi-receipt"></i> Tableau de Bord Facturation
+        </h1>
+        <p class="text-muted">Gestion des facturations et paiements</p>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center border-warning">
+            <div class="card-body">
+                <i class="bi bi-clock-history display-4 text-warning"></i>
+                <h3 class="mt-2">{{ stats.ready_to_invoice }}</h3>
+                <p class="text-muted mb-0">Prêts à Facturer</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center border-success">
+            <div class="card-body">
+                <i class="bi bi-check-circle display-4 text-success"></i>
+                <h3 class="mt-2">{{ stats.invoiced_today }}</h3>
+                <p class="text-muted mb-0">Facturés Aujourd'hui</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center border-info">
+            <div class="card-body">
+                <i class="bi bi-file-earmark-check display-4 text-info"></i>
+                <h3 class="mt-2">{{ stats.total_invoiced }}</h3>
+                <p class="text-muted mb-0">Total Facturés</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center border-primary">
+            <div class="card-body">
+                <i class="bi bi-person-check display-4 text-primary"></i>
+                <h3 class="mt-2">{{ stats.pending_my_action }}</h3>
+                <p class="text-muted mb-0">En Attente</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Ready to Invoice Section -->
+<div class="card mb-4">
+    <div class="card-header bg-warning text-dark">
+        <h5 class="mb-0">
+            <i class="bi bi-exclamation-triangle"></i> Dossiers Prêts à Facturer ({{ ready_files|length }})
+        </h5>
+    </div>
+    <div class="card-body">
+        {% if ready_files %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Numéro Dossier</th>
+                        <th>Propriétaire</th>
+                        <th>Importateur</th>
+                        <th>Pays</th>
+                        <th>Route</th>
+                        <th>Date Réception</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for file in ready_files %}
+                    <tr>
+                        <td><strong>{{ file.file_number }}</strong></td>
+                        <td>
+                            <i class="bi bi-person"></i> {{ file.owner.username }}
+                        </td>
+                        <td>{{ file.importer }}</td>
+                        <td>{{ file.country }}</td>
+                        <td><span class="badge bg-secondary">{{ file.route }}</span></td>
+                        <td>{{ file.receipt_date.strftime('%d/%m/%Y') }}</td>
+                        <td>
+                            <a href="{{ url_for('invoice.process_invoice', file_id=file.id) }}" 
+                               class="btn btn-sm btn-primary">
+                                <i class="bi bi-pencil-square"></i> Traiter
+                            </a>
+                            <a href="{{ url_for('invoice.view_file', file_id=file.id) }}" 
+                               class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-eye"></i> Voir
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-inbox display-1 text-muted"></i>
+            <p class="text-muted mt-3">Aucun dossier en attente de facturation.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Recently Invoiced Section -->
+<div class="card">
+    <div class="card-header bg-success text-white">
+        <h5 class="mb-0">
+            <i class="bi bi-check-circle"></i> Récemment Facturés (20 derniers)
+        </h5>
+    </div>
+    <div class="card-body">
+        {% if invoiced_files %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Numéro Dossier</th>
+                        <th>Numéro MAR</th>
+                        <th>ProForma</th>
+                        <th>Facturé Par</th>
+                        <th>Date Facturation</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for file in invoiced_files %}
+                    <tr>
+                        <td><strong>{{ file.file_number }}</strong></td>
+                        <td><span class="badge bg-info">{{ file.mar_number }}</span></td>
+                        <td><span class="badge bg-info">{{ file.proforma_number }}</span></td>
+                        <td>
+                            {% if file.invoicer %}
+                            <i class="bi bi-person"></i> {{ file.invoicer.username }}
+                            {% else %}
+                            <span class="text-muted">N/A</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ file.invoiced_at.strftime('%d/%m/%Y %H:%M') if file.invoiced_at else 'N/A' }}</td>
+                        <td>
+                            <a href="{{ url_for('invoice.view_file', file_id=file.id) }}" 
+                               class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-eye"></i> Voir
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="text-center mt-3">
+            <a href="{{ url_for('invoice.invoiced_files') }}" class="btn btn-outline-primary">
+                Voir tous les dossiers facturés <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-inbox display-1 text-muted"></i>
+            <p class="text-muted mt-3">Aucun dossier facturé.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Team Performance (if multiple invoicing users) -->
+{% if team_performance %}
+<div class="card mt-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="bi bi-trophy"></i> Performance de l'Équipe</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            {% for member in team_performance %}
+            <div class="col-md-4 mb-3">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <i class="bi bi-person-badge display-4 text-primary"></i>
+                        <h5 class="mt-2">{{ member.username }}</h5>
+                        <h3 class="text-success">{{ member.count }}</h3>
+                        <p class="text-muted mb-0">Dossiers Facturés</p>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

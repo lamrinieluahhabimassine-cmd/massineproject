@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block title %}Dossiers Prêts à Facturer{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <a href="{{ url_for('invoice.dashboard') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Retour au tableau de bord
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header bg-warning text-dark">
+        <h4 class="mb-0">
+            <i class="bi bi-exclamation-triangle"></i> Dossiers Prêts à Facturer ({{ files|length }})
+        </h4>
+    </div>
+    <div class="card-body">
+        {% if files %}
+        <!-- Filters -->
+        <div class="row mb-3">
+            <div class="col-md-12">
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input type="text" class="form-control" id="searchInput" placeholder="Rechercher par numéro de dossier, importateur, propriétaire...">
+                </div>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover" id="readyTable">
+                <thead>
+                    <tr>
+                        <th>Numéro Dossier</th>
+                        <th>Propriétaire</th>
+                        <th>Importateur</th>
+                        <th>Exportateur</th>
+                        <th>Pays</th>
+                        <th>Route</th>
+                        <th>Date Réception</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for file in files %}
+                    <tr>
+                        <td><strong>{{ file.file_number }}</strong></td>
+                        <td>
+                            <i class="bi bi-person"></i> {{ file.owner.username }}<br>
+                            <small class="text-muted">{{ file.owner.email }}</small>
+                        </td>
+                        <td>{{ file.importer }}</td>
+                        <td>{{ file.exporter }}</td>
+                        <td>{{ file.country }}</td>
+                        <td>
+                            <span class="badge bg-secondary">Route {{ file.route }}</span>
+                            {% if file.route == 'B' and file.sor_number %}
+                            <br><small class="text-muted">SOR: {{ file.sor_number }}</small>
+                            {% elif file.route == 'C' and file.sol_number %}
+                            <br><small class="text-muted">SOL: {{ file.sol_number }}</small>
+                            {% endif %}
+                        </td>
+                        <td>{{ file.receipt_date.strftime('%d/%m/%Y') }}</td>
+                        <td>
+                            <a href="{{ url_for('invoice.process_invoice', file_id=file.id) }}" 
+                               class="btn btn-sm btn-primary">
+                                <i class="bi bi-pencil-square"></i> Traiter
+                            </a>
+                            <a href="{{ url_for('invoice.view_file', file_id=file.id) }}" 
+                               class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-eye"></i> Voir
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-inbox display-1 text-muted"></i>
+            <p class="text-muted mt-3">Aucun dossier en attente de facturation.</p>
+            <a href="{{ url_for('invoice.dashboard') }}" class="btn btn-primary">
+                <i class="bi bi-arrow-left"></i> Retour au tableau de bord
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Statistics -->
+<div class="row mt-4">
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="bi bi-clock-history display-4 text-warning"></i>
+                <h3 class="mt-2">{{ files|length }}</h3>
+                <p class="text-muted mb-0">Prêts à Facturer</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="bi bi-signpost display-4 text-secondary"></i>
+                <h3 class="mt-2">{{ files|selectattr('route', 'equalto', 'B')|list|length }}</h3>
+                <p class="text-muted mb-0">Route B</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="bi bi-signpost-fill display-4 text-secondary"></i>
+                <h3 class="mt-2">{{ files|selectattr('route', 'equalto', 'C')|list|length }}</h3>
+                <p class="text-muted mb-0">Route C</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="bi bi-people display-4 text-primary"></i>
+                <h3 class="mt-2">{{ files|map(attribute='owner')|unique|list|length }}</h3>
+                <p class="text-muted mb-0">Propriétaires</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Search functionality
+document.getElementById('searchInput').addEventListener('keyup', function() {
+    const searchValue = this.value.toLowerCase();
+    const table = document.getElementById('readyTable');
+    const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+    
+    for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        const text = row.textContent.toLowerCase();
+        
+        if (text.includes(searchValue)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    }
+});
+</script>
+{% endblock %}
+```
+
+**Sauvegardez le fichier** ✅
+
+---
+
+## ✅ **VÉRIFIEZ LA STRUCTURE DES DOSSIERS:**
+
+Assurez-vous d'avoir cette structure:
+```
+templates/
+├── invoice/
+│   ├── dashboard.html         ✅ (déjà créé)
+│   ├── process_form.html      ✅ (déjà créé)
+│   ├── file_detail.html       ✅ (déjà créé)
+│   ├── ready_files.html       ✅ (NOUVEAU - à créer)
+│   └── invoiced_files.html    ✅ (NOUVEAU - à créer)

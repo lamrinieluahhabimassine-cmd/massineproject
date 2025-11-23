@@ -1,0 +1,280 @@
+{% extends "base.html" %}
+
+{% block title %}KPIs Temporels{% endblock %}
+
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="display-6">
+            <i class="bi bi-graph-up"></i> KPIs Temporels
+        </h1>
+        <p class="text-muted">Analyse des performances et tendances temporelles</p>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center border-primary">
+            <div class="card-body">
+                <i class="bi bi-stopwatch display-4 text-primary"></i>
+                <h3 class="mt-2">
+                    {% if avg_processing_time %}{{ avg_processing_time }} jours{% else %}N/A{% endif %}
+                </h3>
+                <p class="text-muted mb-0">Temps Moyen de Traitement</p>
+                <small class="text-muted">Création → Finalisation</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card text-center border-success">
+            <div class="card-body">
+                <i class="bi bi-check-circle display-4 text-success"></i>
+                <h3 class="mt-2">
+                    {% if deadline_compliance %}{{ deadline_compliance }}%{% else %}N/A{% endif %}
+                </h3>
+                <p class="text-muted mb-0">Taux de Respect des Délais</p>
+                <small class="text-muted">Finalisés avant rappel</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card text-center border-danger">
+            <div class="card-body">
+                <i class="bi bi-exclamation-triangle display-4 text-danger"></i>
+                <h3 class="mt-2">{{ overdue_files|length }}</h3>
+                <p class="text-muted mb-0">Dossiers en Retard</p>
+                <small class="text-muted">Dépassent date de rappel</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card text-center border-warning">
+            <div class="card-body">
+                <i class="bi bi-hourglass-split display-4 text-warning"></i>
+                <h3 class="mt-2">
+                    {% if bottlenecks and bottlenecks|length > 0 %}{{ bottlenecks[0][1] }} jours{% else %}N/A{% endif %}
+                </h3>
+                <p class="text-muted mb-0">Plus Long Délai</p>
+                <small class="text-muted">
+                    {% if bottlenecks and bottlenecks|length > 0 %}{{ bottlenecks[0][0][:30] }}...{% endif %}
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Stage Times -->
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="bi bi-clock-history"></i> Délai Moyen par Étape</h5>
+    </div>
+    <div class="card-body">
+        {% if stage_times %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Étape</th>
+                        <th>Délai Moyen</th>
+                        <th>Indicateur</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for stage, time in stage_times.items() %}
+                    <tr>
+                        <td><strong>{{ stage }}</strong></td>
+                        <td>
+                            {% if time %}
+                            <span class="fs-5">{{ time }} jours</span>
+                            {% else %}
+                            <span class="text-muted">Pas de données</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if time %}
+                                {% if time < 1 %}
+                                <span class="badge bg-success">Rapide</span>
+                                {% elif time < 3 %}
+                                <span class="badge bg-info">Normal</span>
+                                {% elif time < 5 %}
+                                <span class="badge bg-warning">Lent</span>
+                                {% else %}
+                                <span class="badge bg-danger">Très Lent</span>
+                                {% endif %}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted text-center py-4">Aucune donnée disponible pour le moment.</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Trends -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="bi bi-calendar-week"></i> Tendance Hebdomadaire</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="weeklyChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="bi bi-calendar-month"></i> Tendance Mensuelle</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="monthlyChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bottlenecks -->
+{% if bottlenecks and bottlenecks|length > 0 %}
+<div class="card mb-4 border-warning">
+    <div class="card-header bg-warning text-dark">
+        <h5 class="mb-0"><i class="bi bi-funnel"></i> Goulots d'Étranglement (Top 3)</h5>
+    </div>
+    <div class="card-body">
+        <p class="text-muted">Étapes où les dossiers passent le plus de temps:</p>
+        <div class="row">
+            {% for stage, time in bottlenecks %}
+            <div class="col-md-4 mb-3">
+                <div class="card bg-light">
+                    <div class="card-body text-center">
+                        <h6 class="text-muted">{{ loop.index }}. {{ stage }}</h6>
+                        <h2 class="text-warning">{{ time }} jours</h2>
+                        {% if bottlenecks[0][1] and bottlenecks[0][1] > 0 %}
+                        <div class="progress" style="height: 10px;">
+                            <div class="progress-bar bg-warning" style="width: {{ ((time / bottlenecks[0][1]) * 100)|round }}%"></div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="alert alert-info mt-3">
+            <i class="bi bi-lightbulb"></i>
+            <strong>Recommandation:</strong> Concentrez vos efforts sur ces étapes pour réduire le temps de traitement.
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Overdue Files -->
+{% if overdue_files and overdue_files|length > 0 %}
+<div class="card border-danger">
+    <div class="card-header bg-danger text-white">
+        <h5 class="mb-0"><i class="bi bi-exclamation-octagon"></i> Dossiers en Retard ({{ overdue_files|length }})</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Numéro</th>
+                        <th>Propriétaire</th>
+                        <th>Statut</th>
+                        <th>Date Rappel</th>
+                        <th>Retard</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for file in overdue_files[:10] %}
+                    <tr>
+                        <td><strong>{{ file.file_number }}</strong></td>
+                        <td>{{ file.owner.username }}</td>
+                        <td><span class="badge bg-warning text-dark">{{ file.status }}</span></td>
+                        <td>{{ file.recall_date.strftime('%d/%m/%Y') }}</td>
+                        <td><span class="badge bg-danger">{{ (today - file.recall_date).days }} jours</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% if overdue_files|length > 10 %}
+        <p class="text-center text-muted">... et {{ overdue_files|length - 10 }} autres dossiers en retard</p>
+        {% endif %}
+    </div>
+</div>
+{% else %}
+<div class="alert alert-success">
+    <i class="bi bi-check-circle"></i> <strong>Excellent!</strong> Aucun dossier en retard.
+</div>
+{% endif %}
+
+<script>
+// Weekly Trend Chart
+const weeklyCtx = document.getElementById('weeklyChart').getContext('2d');
+new Chart(weeklyCtx, {
+    type: 'line',
+    data: {
+        labels: {{ weekly_trend | map(attribute='week') | list | tojson }},
+        datasets: [{
+            label: 'Créés',
+            data: {{ weekly_trend | map(attribute='created') | list | tojson }},
+            borderColor: 'rgb(54, 162, 235)',
+            backgroundColor: 'rgba(54, 162, 235, 0.1)',
+            tension: 0.4,
+            fill: true
+        }, {
+            label: 'Finalisés',
+            data: {{ weekly_trend | map(attribute='finalized') | list | tojson }},
+            borderColor: 'rgb(75, 192, 192)',
+            backgroundColor: 'rgba(75, 192, 192, 0.1)',
+            tension: 0.4,
+            fill: true
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'top' } },
+        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+    }
+});
+
+// Monthly Trend Chart
+const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
+new Chart(monthlyCtx, {
+    type: 'bar',
+    data: {
+        labels: {{ monthly_trend | map(attribute='month') | list | tojson }},
+        datasets: [{
+            label: 'Créés',
+            data: {{ monthly_trend | map(attribute='created') | list | tojson }},
+            backgroundColor: 'rgba(54, 162, 235, 0.8)'
+        }, {
+            label: 'Finalisés',
+            data: {{ monthly_trend | map(attribute='finalized') | list | tojson }},
+            backgroundColor: 'rgba(75, 192, 192, 0.8)'
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'top' } },
+        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+    }
+});
+</script>
+{% endblock %}

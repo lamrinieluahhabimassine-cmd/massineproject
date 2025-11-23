@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block title %}Historique des Affectations{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <a href="{{ url_for('affecteur.dashboard') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Retour au tableau de bord
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header bg-secondary text-white">
+        <h4 class="mb-0">
+            <i class="bi bi-clock-history"></i> Historique Complet des Affectations
+        </h4>
+    </div>
+    <div class="card-body">
+        {% if files %}
+        <!-- Search Bar -->
+        <div class="row mb-3">
+            <div class="col-md-12">
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input type="text" class="form-control" id="searchInput" placeholder="Rechercher par numéro, utilisateur, importateur...">
+                </div>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover" id="historyTable">
+                <thead>
+                    <tr>
+                        <th>Numéro Dossier</th>
+                        <th>Affecté à</th>
+                        <th>Importateur</th>
+                        <th>Exportateur</th>
+                        <th>Pays</th>
+                        <th>Route</th>
+                        <th>Statut</th>
+                        <th>Date Création</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for file in files %}
+                    <tr>
+                        <td><strong>{{ file.file_number }}</strong></td>
+                        <td>
+                            <i class="bi bi-person"></i> {{ file.owner.username }}<br>
+                            <small class="text-muted">{{ file.owner.email }}</small>
+                        </td>
+                        <td>{{ file.importer }}</td>
+                        <td>{{ file.exporter }}</td>
+                        <td>{{ file.country }}</td>
+                        <td>
+                            <span class="badge bg-secondary">{{ file.route }}</span>
+                            {% if file.route == 'B' and file.sor_number %}
+                            <br><small class="text-muted">SOR: {{ file.sor_number }}</small>
+                            {% elif file.route == 'C' and file.sol_number %}
+                            <br><small class="text-muted">SOL: {{ file.sol_number }}</small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if file.status == 'en attente d\'évaluation' %}
+                            <span class="badge bg-warning text-dark">{{ file.status }}</span>
+                            {% elif file.status == 'Finalized' %}
+                            <span class="badge bg-success">{{ file.status }}</span>
+                            {% else %}
+                            <span class="badge bg-info">{{ file.status }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ file.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-inbox display-1 text-muted"></i>
+            <p class="text-muted mt-3">Aucun dossier affecté.</p>
+            <a href="{{ url_for('affecteur.upload_excel') }}" class="btn btn-primary">
+                <i class="bi bi-upload"></i> Téléverser des Dossiers
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Statistics -->
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="bi bi-folder-plus display-4 text-primary"></i>
+                <h3 class="mt-2">{{ files|length }}</h3>
+                <p class="text-muted mb-0">Total Dossiers</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="bi bi-people display-4 text-info"></i>
+                <h3 class="mt-2">{{ files|map(attribute='owner')|unique|list|length }}</h3>
+                <p class="text-muted mb-0">Utilisateurs Distincts</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="bi bi-signpost display-4 text-secondary"></i>
+                <h3 class="mt-2">{{ files|selectattr('route', 'equalto', 'B')|list|length + files|selectattr('route', 'equalto', 'C')|list|length }}</h3>
+                <p class="text-muted mb-0">Routes B & C</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Search functionality
+document.getElementById('searchInput').addEventListener('keyup', function() {
+    const searchValue = this.value.toLowerCase();
+    const table = document.getElementById('historyTable');
+    const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+    
+    for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        const text = row.textContent.toLowerCase();
+        
+        if (text.includes(searchValue)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    }
+});
+</script>
+{% endblock %}

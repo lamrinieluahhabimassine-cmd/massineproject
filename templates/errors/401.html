@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}Non Autorisé - 401{% endblock %}
+
+{% block content %}
+<div class="container text-center" style="padding: 100px 0;">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <i class="bi bi-person-x display-1 text-warning"></i>
+            <h1 class="display-4 mt-4">401</h1>
+            <h2>Authentification Requise</h2>
+            <p class="lead text-muted mt-3">
+                Vous devez vous connecter pour accéder à cette page.
+            </p>
+            
+            <div class="mt-5">
+                <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-lg me-2">
+                    <i class="bi bi-box-arrow-in-right"></i> Se Connecter
+                </a>
+                <a href="{{ url_for('auth.index') }}" class="btn btn-outline-secondary btn-lg">
+                    <i class="bi bi-house"></i> Accueil
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

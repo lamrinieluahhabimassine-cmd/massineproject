@@ -1,0 +1,264 @@
+{% extends "base.html" %}
+
+{% block title %}Dossier {{ file.file_number }}{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col">
+        <a href="{{ url_for('user.dashboard') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Retour au tableau de bord
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <!-- Completion Alert (if status is "à compléter") -->
+        {% if file.status == 'à compléter' and file.completion_description %}
+        <div class="alert alert-warning border-start border-4 mb-4">
+            <h5 class="alert-heading">
+                <i class="bi bi-exclamation-circle-fill"></i> À Compléter
+            </h5>
+            <p class="mb-2">
+                <strong>Description:</strong>
+            </p>
+            <p class="mb-0" style="white-space: pre-wrap;">{{ file.completion_description }}</p>
+            {% if file.completion_date %}
+            <hr>
+            <small class="text-muted">
+                <i class="bi bi-calendar"></i> Marqué le {{ file.completion_date.strftime('%d/%m/%Y à %H:%M') }}
+            </small>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- File Details Card -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">
+                    <i class="bi bi-file-earmark-text"></i> Dossier {{ file.file_number }}
+                </h4>
+                {% if file.is_overdue() %}
+                <span class="badge bg-warning text-dark">
+                    <i class="bi bi-exclamation-triangle"></i> Rappel!
+                </span>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <h6 class="text-muted">Date de Réception</h6>
+                        <p><i class="bi bi-calendar"></i> {{ file.receipt_date.strftime('%d/%m/%Y') }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-muted">Statut</h6>
+                        <p>
+                            {% if file.status == 'Finalized' %}
+                            <span class="badge bg-success fs-6">{{ file.status }}</span>
+                            {% elif file.status == 'en attente d\'évaluation' %}
+                            <span class="badge bg-warning text-dark fs-6">{{ file.status }}</span>
+                            {% elif file.status == 'à compléter' %}
+                            <span class="badge bg-warning text-dark fs-6">{{ file.status }}</span>
+                            {% else %}
+                            <span class="badge bg-info fs-6">{{ file.status }}</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+
+                <hr>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <h6 class="text-muted">Importateur</h6>
+                        <p><i class="bi bi-building"></i> {{ file.importer }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-muted">Exportateur</h6>
+                        <p><i class="bi bi-shop"></i> {{ file.exporter }}</p>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <h6 class="text-muted">Pays</h6>
+                        <p><i class="bi bi-globe"></i> {{ file.country }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-muted">Route</h6>
+                        <p><span class="badge bg-secondary fs-5">Route {{ file.route }}</span></p>
+                    </div>
+                </div>
+
+                {% if file.route == 'B' and file.sor_number %}
+                <div class="mb-3">
+                    <h6 class="text-muted">Numéro SOR</h6>
+                    <p><i class="bi bi-file-text"></i> {{ file.sor_number }}</p>
+                </div>
+                {% endif %}
+
+                {% if file.route == 'C' and file.sol_number %}
+                <div class="mb-3">
+                    <h6 class="text-muted">Numéro SOL</h6>
+                    <p><i class="bi bi-file-text"></i> {{ file.sol_number }}</p>
+                </div>
+                {% endif %}
+
+                {% if file.recall_date %}
+                <div class="mb-3">
+                    <h6 class="text-muted">Date de Rappel</h6>
+                    <p>
+                        <i class="bi bi-alarm"></i> {{ file.recall_date.strftime('%d/%m/%Y') }}
+                        {% if file.is_overdue() %}
+                        <span class="badge bg-danger">Dépassée!</span>
+                        {% endif %}
+                    </p>
+                </div>
+                {% endif %}
+
+                <hr>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-muted">Créé le</h6>
+                        <p><small>{{ file.created_at.strftime('%d/%m/%Y à %H:%M') }}</small></p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-muted">Dernière modification</h6>
+                        <p><small>{{ file.updated_at.strftime('%d/%m/%Y à %H:%M') }}</small></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CoC Details Card -->
+        {% if file.coc_details %}
+        <div class="card border-success mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-award"></i> Détails Certificate of Conformity (CoC)
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <h6 class="text-muted">Date CoC</h6>
+                        <p>{{ file.coc_details.coc_date.strftime('%d/%m/%Y') }}</p>
+                    </div>
+                    <div class="col-md-4">
+                        <h6 class="text-muted">Numéro CoC</h6>
+                        <p><strong>{{ file.coc_details.coc_number }}</strong></p>
+                    </div>
+                    <div class="col-md-4">
+                        <h6 class="text-muted">Numéro de Facture</h6>
+                        <p><strong>{{ file.coc_details.invoice_number }}</strong></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% elif file.can_add_coc() %}
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i>
+            Ce dossier est finalisé. Vous pouvez maintenant ajouter les détails CoC.
+            <a href="{{ url_for('user.add_coc', file_id=file.id) }}" class="btn btn-success btn-sm ms-2">
+                <i class="bi bi-plus-circle"></i> Ajouter CoC
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Actions Sidebar -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0"><i class="bi bi-gear"></i> Actions</h5>
+            </div>
+            <div class="list-group list-group-flush">
+                {% if file.user_id == current_user.id %}
+                <a href="{{ url_for('user.edit_file', file_id=file.id) }}" class="list-group-item list-group-item-action">
+                    <i class="bi bi-pencil"></i> Modifier le dossier
+                </a>
+                {% endif %}
+                
+                {% if file.can_add_coc() and not file.coc_details %}
+                <a href="{{ url_for('user.add_coc', file_id=file.id) }}" class="list-group-item list-group-item-action">
+                    <i class="bi bi-plus-circle"></i> Ajouter CoC
+                </a>
+                {% endif %}
+                
+                {% if current_user.is_admin() %}
+                <form method="POST" action="{{ url_for('admin.delete_file', file_id=file.id) }}" 
+                      onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce dossier ?');">
+                    <button type="submit" class="list-group-item list-group-item-action text-danger">
+                        <i class="bi bi-trash"></i> Supprimer le dossier
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Info Box -->
+        <div class="card mt-3">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0"><i class="bi bi-info-circle"></i> Informations</h6>
+            </div>
+            <div class="card-body">
+                <p class="mb-2">
+                    <strong>Propriétaire:</strong><br>
+                    <i class="bi bi-person"></i> {{ file.owner.username }}
+                </p>
+                <p class="mb-0">
+                    <strong>Email:</strong><br>
+                    <i class="bi bi-envelope"></i> {{ file.owner.email }}
+                </p>
+            </div>
+        </div>
+
+        <!-- Status Timeline -->
+        <div class="card mt-3">
+            <div class="card-header bg-secondary text-white">
+                <h6 class="mb-0"><i class="bi bi-clock-history"></i> Progression</h6>
+            </div>
+            <div class="card-body">
+                <div class="timeline">
+                    <!-- 1. En attente d'évaluation -->
+                    <div class="{% if file.status == 'en attente d\'évaluation' %}text-primary fw-bold{% else %}text-success{% endif %}">
+                        <i class="bi bi-{% if file.status == 'en attente d\'évaluation' %}circle-fill{% else %}check-circle-fill{% endif %}"></i>
+                        En attente d'évaluation
+                    </div>
+                    
+                    <!-- 2. En cours d'évaluation -->
+                    <div class="{% if file.status == 'en cours d\'évaluation' %}text-primary fw-bold{% elif file.status in ['ready to invoice', 'payed', 'en cours de traitement', 'à compléter', 'transfert à l\'inspection', 'Finalized'] %}text-success{% else %}text-muted{% endif %} mt-2">
+                        <i class="bi bi-{% if file.status == 'en cours d\'évaluation' %}circle-fill{% elif file.status in ['ready to invoice', 'payed', 'en cours de traitement', 'à compléter', 'transfert à l\'inspection', 'Finalized'] %}check-circle-fill{% else %}circle{% endif %}"></i>
+                        En cours d'évaluation
+                    </div>
+                    
+                    <!-- 3. En cours de traitement -->
+                    <div class="{% if file.status == 'en cours de traitement' %}text-primary fw-bold{% elif file.status in ['à compléter', 'transfert à l\'inspection', 'Finalized'] %}text-success{% else %}text-muted{% endif %} mt-2">
+                        <i class="bi bi-{% if file.status == 'en cours de traitement' %}circle-fill{% elif file.status in ['à compléter', 'transfert à l\'inspection', 'Finalized'] %}check-circle-fill{% else %}circle{% endif %}"></i>
+                        En cours de traitement
+                    </div>
+                    
+                    <!-- 4. À Compléter (NEW) -->
+                    <div class="{% if file.status == 'à compléter' %}text-primary fw-bold{% elif file.status in ['transfert à l\'inspection', 'Finalized'] %}text-success{% else %}text-muted{% endif %} mt-2">
+                        <i class="bi bi-{% if file.status == 'à compléter' %}circle-fill{% elif file.status in ['transfert à l\'inspection', 'Finalized'] %}check-circle-fill{% else %}circle{% endif %}"></i>
+                        À Compléter
+                    </div>
+                    
+                    <!-- 5. Transfert à l'inspection -->
+                    <div class="{% if file.status == 'transfert à l\'inspection' %}text-primary fw-bold{% elif file.status == 'Finalized' %}text-success{% else %}text-muted{% endif %} mt-2">
+                        <i class="bi bi-{% if file.status == 'transfert à l\'inspection' %}circle-fill{% elif file.status == 'Finalized' %}check-circle-fill{% else %}circle{% endif %}"></i>
+                        Transfert à l'inspection
+                    </div>
+                    
+                    <!-- 6. Finalized -->
+                    <div class="{% if file.status == 'Finalized' %}text-success fw-bold{% else %}text-muted{% endif %} mt-2">
+                        <i class="bi bi-{% if file.status == 'Finalized' %}check-circle-fill{% else %}circle{% endif %}"></i>
+                        Finalized
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

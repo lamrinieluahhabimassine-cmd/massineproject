@@ -1,0 +1,263 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="display-6">
+            <i class="bi bi-shield-check"></i> Tableau de Bord Administrateur
+        </h1>
+        <p class="text-muted">Vue d'ensemble complète de la plateforme</p>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center border-primary">
+            <div class="card-body">
+                <i class="bi bi-folder2-open display-4 text-primary"></i>
+                <h3 class="mt-2">{{ stats.total_files }}</h3>
+                <p class="text-muted mb-0">Total Dossiers</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center border-success">
+            <div class="card-body">
+                <i class="bi bi-people-fill display-4 text-success"></i>
+                <h3 class="mt-2">{{ stats.total_users }}</h3>
+                <p class="text-muted mb-0">Utilisateurs</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center border-warning">
+            <div class="card-body">
+                <i class="bi bi-exclamation-triangle-fill display-4 text-warning"></i>
+                <h3 class="mt-2">{{ stats.alerts }}</h3>
+                <p class="text-muted mb-0">Alertes Rappel</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center border-info">
+            <div class="card-body">
+                <i class="bi bi-check-circle-fill display-4 text-info"></i>
+                <h3 class="mt-2">{{ stats.finalized }}</h3>
+                <p class="text-muted mb-0">Finalisés</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Status Distribution -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-pie-chart"></i> Distribution par Statut</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-2">
+                    <div class="d-flex justify-content-between">
+                        <span>En attente d'évaluation</span>
+                        <strong>{{ stats.pending }}</strong>
+                    </div>
+                    <div class="progress" style="height: 25px;">
+                        <div class="progress-bar bg-warning" style="width: {{ (stats.pending / stats.total_files * 100) if stats.total_files > 0 else 0 }}%"></div>
+                    </div>
+                </div>
+                <div class="mb-2">
+                    <div class="d-flex justify-content-between">
+                        <span>En cours</span>
+                        <strong>{{ stats.in_progress }}</strong>
+                    </div>
+                    <div class="progress" style="height: 25px;">
+                        <div class="progress-bar bg-info" style="width: {{ (stats.in_progress / stats.total_files * 100) if stats.total_files > 0 else 0 }}%"></div>
+                    </div>
+                </div>
+                <div class="mb-2">
+                    <div class="d-flex justify-content-between">
+                        <span>Finalisés</span>
+                        <strong>{{ stats.finalized }}</strong>
+                    </div>
+                    <div class="progress" style="height: 25px;">
+                        <div class="progress-bar bg-success" style="width: {{ (stats.finalized / stats.total_files * 100) if stats.total_files > 0 else 0 }}%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0"><i class="bi bi-signpost-split"></i> Distribution par Route</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-2">
+                    <div class="d-flex justify-content-between">
+                        <span>Route A</span>
+                        <strong>{{ stats.route_a }}</strong>
+                    </div>
+                    <div class="progress" style="height: 25px;">
+                        <div class="progress-bar" style="width: {{ (stats.route_a / stats.total_files * 100) if stats.total_files > 0 else 0 }}%"></div>
+                    </div>
+                </div>
+                <div class="mb-2">
+                    <div class="d-flex justify-content-between">
+                        <span>Route B (SOR)</span>
+                        <strong>{{ stats.route_b }}</strong>
+                    </div>
+                    <div class="progress" style="height: 25px;">
+                        <div class="progress-bar" style="width: {{ (stats.route_b / stats.total_files * 100) if stats.total_files > 0 else 0 }}%"></div>
+                    </div>
+                </div>
+                <div class="mb-2">
+                    <div class="d-flex justify-content-between">
+                        <span>Route C (SOL)</span>
+                        <strong>{{ stats.route_c }}</strong>
+                    </div>
+                    <div class="progress" style="height: 25px;">
+                        <div class="progress-bar" style="width: {{ (stats.route_c / stats.total_files * 100) if stats.total_files > 0 else 0 }}%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Alerts -->
+{% if alert_files %}
+<div class="alert alert-danger">
+    <h5 class="alert-heading">
+        <i class="bi bi-bell-fill"></i> 
+        Dossiers en Rappel ({{ alert_files|length }})
+    </h5>
+    <p>Les dossiers suivants ont dépassé leur date de rappel :</p>
+    <div class="table-responsive">
+        <table class="table table-sm table-bordered bg-white">
+            <thead>
+                <tr>
+                    <th>Numéro</th>
+                    <th>Utilisateur</th>
+                    <th>Date Rappel</th>
+                    <th>Statut</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for file in alert_files[:5] %}
+                <tr>
+                    <td><strong>{{ file.file_number }}</strong></td>
+                    <td>{{ file.owner.username }}</td>
+                    <td>{{ file.recall_date.strftime('%d/%m/%Y') }}</td>
+                    <td><span class="badge bg-warning text-dark">{{ file.status }}</span></td>
+                    <td>
+                        <a href="{{ url_for('user.view_file', file_id=file.id) }}" class="btn btn-sm btn-primary">Voir</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% if alert_files|length > 5 %}
+    <a href="{{ url_for('admin.alerts') }}" class="btn btn-sm btn-danger">
+        Voir tous les rappels ({{ alert_files|length }})
+    </a>
+    {% endif %}
+</div>
+{% endif %}
+
+<!-- Quick Links -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="bi bi-folder-fill display-3 text-primary"></i>
+                <h5 class="mt-3">Tous les Dossiers</h5>
+                <p class="text-muted">Voir et gérer tous les dossiers</p>
+                <a href="{{ url_for('admin.files') }}" class="btn btn-primary">
+                    <i class="bi bi-arrow-right"></i> Accéder
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="bi bi-people-fill display-3 text-success"></i>
+                <h5 class="mt-3">Utilisateurs</h5>
+                <p class="text-muted">Gérer les utilisateurs et rôles</p>
+                <a href="{{ url_for('admin.users') }}" class="btn btn-success">
+                    <i class="bi bi-arrow-right"></i> Accéder
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="bi bi-exclamation-triangle-fill display-3 text-warning"></i>
+                <h5 class="mt-3">Alertes Rappel</h5>
+                <p class="text-muted">Dossiers nécessitant attention</p>
+                <a href="{{ url_for('admin.alerts') }}" class="btn btn-warning">
+                    <i class="bi bi-arrow-right"></i> Accéder
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Files -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-clock-history"></i> Dossiers Récents</h5>
+    </div>
+    <div class="card-body">
+        {% if files %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Numéro</th>
+                        <th>Utilisateur</th>
+                        <th>Importateur</th>
+                        <th>Route</th>
+                        <th>Statut</th>
+                        <th>Date Création</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for file in files %}
+                    <tr>
+                        <td><strong>{{ file.file_number }}</strong></td>
+                        <td>{{ file.owner.username }}</td>
+                        <td>{{ file.importer }}</td>
+                        <td><span class="badge bg-secondary">{{ file.route }}</span></td>
+                        <td>
+                            {% if file.status == 'Finalized' %}
+                            <span class="badge bg-success">{{ file.status }}</span>
+                            {% else %}
+                            <span class="badge bg-info">{{ file.status }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ file.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="text-center">
+            <a href="{{ url_for('admin.files') }}" class="btn btn-outline-primary">
+                Voir tous les dossiers <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
+        {% else %}
+        <p class="text-center text-muted">Aucun dossier pour le moment.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

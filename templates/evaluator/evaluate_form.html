@@ -1,0 +1,261 @@
+{% extends "base.html" %}
+
+{% block title %}Évaluer {{ file.file_number }}{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <a href="{{ url_for('evaluator.dashboard') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Retour au tableau de bord
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <!-- File Information Card -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    <i class="bi bi-file-earmark-text"></i> Dossier {{ file.file_number }}
+                </h4>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <h6 class="text-muted">Importateur</h6>
+                        <p><i class="bi bi-building"></i> {{ file.importer }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-muted">Exportateur</h6>
+                        <p><i class="bi bi-shop"></i> {{ file.exporter }}</p>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <h6 class="text-muted">Pays</h6>
+                        <p><i class="bi bi-globe"></i> {{ file.country }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-muted">Route</h6>
+                        <p><span class="badge bg-secondary fs-5">Route {{ file.route }}</span></p>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-muted">Date de Réception</h6>
+                        <p><i class="bi bi-calendar"></i> {{ file.receipt_date.strftime('%d/%m/%Y') }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-muted">Statut</h6>
+                        <p>
+                            <span class="badge bg-info fs-6">{{ file.status }}</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Evaluation Form Card -->
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-pencil-square"></i> Formulaire d'Évaluation
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="evaluationForm">
+                    <!-- Montant de Facture -->
+                    <div class="mb-4">
+                        <label for="montantFacture" class="form-label">
+                            <i class="bi bi-cash-coin"></i> Montant de Facture <span class="text-danger" id="montantRequired">*</span>
+                        </label>
+                        <div class="input-group">
+                            <input type="number" class="form-control" id="montantFacture" name="montant_facture" 
+                                   placeholder="0.00" step="0.01" min="0" required 
+                                   value="{{ file.montant_facture if file.montant_facture else '' }}">
+                            <span class="input-group-text">MAD</span>
+                        </div>
+                        <small class="text-muted" id="montantHelp">Entrez le montant de facture estimé ou réel</small>
+                    </div>
+
+                    <hr>
+
+                    <!-- Decision Radio Buttons -->
+                    <div class="mb-4">
+                        <label class="form-label">
+                            <i class="bi bi-question-circle"></i> Décision d'Évaluation <span class="text-danger">*</span>
+                        </label>
+
+                        <!-- Soumis Option -->
+                        <div class="card mb-3 p-3 border-2" id="soumisCard">
+                            <div class="form-check">
+                                <input class="form-check-input decision-radio" type="radio" name="decision" id="soumis" 
+                                       value="soumis" required onchange="updateMontantField()">
+                                <label class="form-check-label" for="soumis">
+                                    <strong class="text-success">✅ Soumis</strong>
+                                    <p class="text-muted small mb-0">
+                                        Le dossier est accepté et sera transféré à l'équipe de facturation pour traitement
+                                    </p>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Non Soumis Option -->
+                        <div class="card mb-3 p-3 border-2" id="nonSoumisCard">
+                            <div class="form-check">
+                                <input class="form-check-input decision-radio" type="radio" name="decision" id="non_soumis" 
+                                       value="non_soumis" required onchange="updateMontantField()">
+                                <label class="form-check-label" for="non_soumis">
+                                    <strong class="text-danger">❌ Non Soumis</strong>
+                                    <p class="text-muted small mb-0">
+                                        Le dossier est rejeté et sera finalisé sans traitement supplémentaire
+                                    </p>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Dispensé Option -->
+                        <div class="card mb-3 p-3 border-2" id="dispenseCard">
+                            <div class="form-check">
+                                <input class="form-check-input decision-radio" type="radio" name="decision" id="dispense" 
+                                       value="dispense" required onchange="updateMontantField()">
+                                <label class="form-check-label" for="dispense">
+                                    <strong class="text-warning">🛑 Dispensé</strong>
+                                    <p class="text-muted small mb-0">
+                                        Le dossier est exempté et sera finalisé sans traitement supplémentaire
+                                    </p>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <!-- Buttons -->
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('evaluator.dashboard') }}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Annuler
+                        </a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check-circle"></i> Soumettre l'Évaluation
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Info Sidebar -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0"><i class="bi bi-info-circle"></i> Guide d'Évaluation</h6>
+            </div>
+            <div class="card-body">
+                <h6 class="text-primary">Options d'Évaluation:</h6>
+                
+                <p class="small mb-3">
+                    <strong class="text-success">Soumis:</strong><br>
+                    Acceptez le dossier pour traitement par l'équipe de facturation. Le dossier passera au statut "ready to invoice". <span class="text-danger">Le montant de facture est obligatoire.</span>
+                </p>
+
+                <p class="small mb-3">
+                    <strong class="text-danger">Non Soumis:</strong><br>
+                    Rejetez le dossier. Il sera finalisé directement sans traitement supplémentaire. Le montant ne sera pas enregistré.
+                </p>
+
+                <p class="small">
+                    <strong class="text-warning">Dispensé:</strong><br>
+                    Exemptez le dossier. Il sera finalisé directement sans traitement supplémentaire. Le montant ne sera pas enregistré.
+                </p>
+
+                <hr>
+
+                <p class="small text-muted mb-0">
+                    <i class="bi bi-exclamation-circle"></i>
+                    <strong>Important:</strong> Le montant de facture est obligatoire uniquement pour la décision "Soumis".
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.form-check-input:checked ~ label,
+.form-check-input:checked {
+    color: #fff;
+}
+
+#soumisCard:has(#soumis:checked) {
+    background-color: #d4edda;
+    border-color: #28a745 !important;
+}
+
+#nonSoumisCard:has(#non_soumis:checked) {
+    background-color: #f8d7da;
+    border-color: #dc3545 !important;
+}
+
+#dispenseCard:has(#dispense:checked) {
+    background-color: #fff3cd;
+    border-color: #ffc107 !important;
+}
+
+.montant-disabled {
+    background-color: #e9ecef;
+    cursor: not-allowed;
+}
+</style>
+
+<script>
+function updateMontantField() {
+    const soumisRadio = document.getElementById('soumis');
+    const montantInput = document.getElementById('montantFacture');
+    const montantRequired = document.getElementById('montantRequired');
+    const montantHelp = document.getElementById('montantHelp');
+    
+    if (soumisRadio.checked) {
+        // Soumis: Montant obligatoire et activé
+        montantInput.disabled = false;
+        montantInput.required = true;
+        montantInput.classList.remove('montant-disabled');
+        montantRequired.style.display = 'inline';
+        montantHelp.textContent = 'Entrez le montant de facture estimé ou réel (obligatoire)';
+    } else {
+        // Non soumis ou Dispensé: Montant désactivé et vide
+        montantInput.disabled = true;
+        montantInput.required = false;
+        montantInput.value = '';
+        montantInput.classList.add('montant-disabled');
+        montantRequired.style.display = 'none';
+        montantHelp.textContent = 'Le montant ne sera pas enregistré pour cette décision';
+    }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    updateMontantField();
+});
+
+// Prevent form submission if Soumis is selected without montant
+document.getElementById('evaluationForm').addEventListener('submit', function(e) {
+    const soumisRadio = document.getElementById('soumis');
+    const montantInput = document.getElementById('montantFacture');
+    
+    if (soumisRadio.checked && !montantInput.value) {
+        e.preventDefault();
+        alert('⚠️ Le montant de facture est obligatoire pour la décision "Soumis"');
+        montantInput.focus();
+        return false;
+    }
+});
+</script>
+{% endblock %}

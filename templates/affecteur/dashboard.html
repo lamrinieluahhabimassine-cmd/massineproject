@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+
+{% block title %}Tableau de Bord Affecteur{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="display-6">
+            <i class="bi bi-upload"></i> Tableau de Bord Affecteur
+        </h1>
+        <p class="text-muted">Affectation de dossiers en masse via Excel</p>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center border-primary">
+            <div class="card-body">
+                <i class="bi bi-folder-plus display-4 text-primary"></i>
+                <h3 class="mt-2">{{ stats.total_assigned }}</h3>
+                <p class="text-muted mb-0">Total Dossiers Affectés</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center border-success">
+            <div class="card-body">
+                <i class="bi bi-calendar-check display-4 text-success"></i>
+                <h3 class="mt-2">{{ stats.assigned_today }}</h3>
+                <p class="text-muted mb-0">Affectés Aujourd'hui</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center border-warning">
+            <div class="card-body">
+                <i class="bi bi-clock-history display-4 text-warning"></i>
+                <h3 class="mt-2">{{ stats.pending_evaluation }}</h3>
+                <p class="text-muted mb-0">En Attente d'Évaluation</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center border-info">
+            <div class="card-body">
+                <i class="bi bi-people display-4 text-info"></i>
+                <h3 class="mt-2">{{ stats.total_users }}</h3>
+                <p class="text-muted mb-0">Utilisateurs Actifs</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card border-primary">
+            <div class="card-body text-center py-5">
+                <i class="bi bi-file-earmark-excel display-1 text-primary"></i>
+                <h4 class="mt-3">Téléverser un Fichier Excel</h4>
+                <p class="text-muted">Affectez plusieurs dossiers en une seule opération</p>
+                <a href="{{ url_for('affecteur.upload_excel') }}" class="btn btn-primary btn-lg">
+                    <i class="bi bi-upload"></i> Téléverser Maintenant
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card border-success">
+            <div class="card-body text-center py-5">
+                <i class="bi bi-download display-1 text-success"></i>
+                <h4 class="mt-3">Télécharger le Modèle Excel</h4>
+                <p class="text-muted">Fichier Excel avec format requis et exemples</p>
+                <a href="{{ url_for('affecteur.download_template') }}" class="btn btn-success btn-lg">
+                    <i class="bi bi-download"></i> Télécharger Modèle
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Uploads -->
+<div class="card">
+    <div class="card-header bg-secondary text-white">
+        <h5 class="mb-0">
+            <i class="bi bi-clock-history"></i> Dossiers Récemment Affectés (50 derniers)
+        </h5>
+    </div>
+    <div class="card-body">
+        {% if recent_uploads %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Numéro Dossier</th>
+                        <th>Affecté à</th>
+                        <th>Importateur</th>
+                        <th>Pays</th>
+                        <th>Route</th>
+                        <th>Statut</th>
+                        <th>Date Création</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for file in recent_uploads %}
+                    <tr>
+                        <td><strong>{{ file.file_number }}</strong></td>
+                        <td>
+                            <i class="bi bi-person"></i> {{ file.owner.username }}<br>
+                            <small class="text-muted">{{ file.owner.email }}</small>
+                        </td>
+                        <td>{{ file.importer }}</td>
+                        <td>{{ file.country }}</td>
+                        <td><span class="badge bg-secondary">{{ file.route }}</span></td>
+                        <td>
+                            {% if file.status == 'en attente d\'évaluation' %}
+                            <span class="badge bg-warning text-dark">{{ file.status }}</span>
+                            {% else %}
+                            <span class="badge bg-info">{{ file.status }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ file.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="text-center mt-3">
+            <a href="{{ url_for('affecteur.history') }}" class="btn btn-outline-primary">
+                <i class="bi bi-list"></i> Voir tout l'historique
+            </a>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-inbox display-1 text-muted"></i>
+            <p class="text-muted mt-3">Aucun dossier affecté pour le moment.</p>
+            <a href="{{ url_for('affecteur.upload_excel') }}" class="btn btn-primary">
+                <i class="bi bi-upload"></i> Commencer à Affecter
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Instructions Card -->
+<div class="card mt-4">
+    <div class="card-header bg-info text-white">
+        <h6 class="mb-0"><i class="bi bi-info-circle"></i> Guide d'Utilisation</h6>
+    </div>
+    <div class="card-body">
+        <h6 class="fw-bold">Comment affecter des dossiers en masse:</h6>
+        <ol>
+            <li><strong>Téléchargez le modèle Excel</strong> en cliquant sur le bouton vert ci-dessus</li>
+            <li><strong>Remplissez le fichier</strong> avec les informations des dossiers:
+                <ul>
+                    <li><code>file_number</code>: Numéro unique du dossier (ex: VOC-2025-001)</li>
+                    <li><code>receipt_date</code>: Date de réception (format: YYYY-MM-DD)</li>
+                    <li><code>importer</code>: Nom de l'importateur</li>
+                    <li><code>exporter</code>: Nom de l'exportateur</li>
+                    <li><code>country</code>: Pays d'origine</li>
+                    <li><code>route</code>: Route (A, B ou C)</li>
+                    <li><code>sor_number</code>: Numéro SOR (requis pour Route B)</li>
+                    <li><code>sol_number</code>: Numéro SOL (requis pour Route C)</li>
+                    <li><code>user_email</code>: Email de l'utilisateur à qui affecter le dossier</li>
+                </ul>
+            </li>
+            <li><strong>Téléversez le fichier</strong> en cliquant sur "Téléverser Maintenant"</li>
+            <li>Les dossiers seront créés avec le statut <span class="badge bg-warning text-dark">en attente d'évaluation</span></li>
+            <li>Les utilisateurs recevront une notification automatique</li>
+        </ol>
+        
+        <div class="alert alert-warning mt-3">
+            <i class="bi bi-exclamation-triangle"></i>
+            <strong>Important:</strong>
+            <ul class="mb-0">
+                <li>Les emails des utilisateurs doivent exister dans le système</li>
+                <li>Les numéros de dossiers doivent être uniques</li>
+                <li>Route B nécessite un numéro SOR</li>
+                <li>Route C nécessite un numéro SOL</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
